@@ -13,12 +13,14 @@ is the moat; see `docs/ARCHITECTURE.md`.
 
 ## Status
 
-Milestone 4 of 6 complete: foundation + demo experience, the upload +
-transcription pipeline, the IP intelligence engine, and curriculum
-architecture (blueprint generation from the chosen course direction,
-editable/reorderable curriculum, approval checkpoint). Lesson
-generation (Milestone 5) is next. See `docs/DECISIONS.md` for the
-build log and `docs/ARCHITECTURE.md` for the pipeline design.
+All six build milestones are complete: foundation + demo experience,
+upload + transcription pipeline, IP intelligence engine, curriculum
+architecture, the lesson studio (generation, source-support
+verification, regeneration with reversible drafts), and course assets +
+exports (bonus vault, student workbook, Markdown/DOCX/CSV/JSON/ZIP
+export centre, project deletion). See `docs/DECISIONS.md` for the build
+log, `docs/ARCHITECTURE.md` for the pipeline design and
+`docs/OPERATIONS.md` for retry/usage runbooks.
 
 ## Quick start (demo mode — zero credentials)
 

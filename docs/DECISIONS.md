@@ -20,3 +20,7 @@ and document rather than block on questions.
 | 13 | Invalid structured output → one re-ask, then retryable job failure | Balances resilience against runaway token spend; both calls' tokens are recorded in usage_events. |
 | 14 | Curriculum reordering uses accessible up/down controls, not drag-and-drop (yet) | Keyboard-accessible and dependency-free for the MVP; a dnd layer can be added over the same position-swap actions later. |
 | 15 | Blueprint regeneration replaces only DRAFT blueprints | An approved blueprint is a contract with the user; choosing a new direction creates the next version instead of mutating approved work. |
+| 16 | Lesson retrieval is lexical (term overlap + blueprint-named-training boost), not embeddings | Zero extra infrastructure for the MVP; the retrieval interface is isolated in `worker/lib/retrieval.mjs` so embeddings can replace scoring without touching the pipeline. |
+| 17 | Lessons generate sequentially in one job, not fan-out | Each lesson receives the previous lesson's actual takeaways (brief §9.15 anti-repetition rule); resume-on-retry skips lessons that already have content. |
+| 18 | Exports generate on demand from live data, no stored export files | Guarantees "latest saved edits, never an earlier draft" (brief §14) and keeps storage costs at zero; the `exports` table remains for future cached/emailed packages. |
+| 19 | Vault + workbook generate when the last lesson is marked Approved | Brief stage 10: assets only after core lessons are complete; approval of every lesson is the concrete signal. |

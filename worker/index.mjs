@@ -12,6 +12,11 @@ import {
   runExtractIp,
   runGenerateBlueprint,
 } from "./lib/ai-pipeline.mjs";
+import {
+  runGenerateLessons,
+  runRegenerateLesson,
+} from "./lib/lesson-pipeline.mjs";
+import { runGenerateCourseAssets } from "./lib/assets-pipeline.mjs";
 
 const required = [
   "SUPABASE_URL",
@@ -41,6 +46,9 @@ const HANDLERS = {
   extract_ip: runExtractIp,
   build_ip_map: runBuildIpMap,
   generate_blueprint: runGenerateBlueprint,
+  generate_lessons: runGenerateLessons,
+  regenerate_lesson: runRegenerateLesson,
+  generate_course_assets: runGenerateCourseAssets,
 };
 
 async function tick() {

@@ -4,8 +4,14 @@ import { getSessionUser } from "@/lib/auth";
 import { getDataSource } from "@/lib/data";
 import { LessonContent } from "@/lib/markdown";
 import { formatTimestamp } from "@/lib/validation";
+import { isDemoMode } from "@/lib/config";
 import { BackLink, Card, ScoreBar, SupportBadge } from "@/components/ui";
-import { saveLessonAction } from "./actions";
+import {
+  regenerateLessonAction,
+  restorePreviousDraftAction,
+  saveLessonAction,
+  setLessonStatusAction,
+} from "./actions";
 
 export const metadata = { title: "Lesson" };
 
@@ -14,10 +20,10 @@ export default async function LessonPage({
   searchParams,
 }: {
   params: Promise<{ id: string; lessonId: string }>;
-  searchParams: Promise<{ edit?: string; conflict?: string }>;
+  searchParams: Promise<{ edit?: string; conflict?: string; limit?: string }>;
 }) {
   const { id, lessonId } = await params;
-  const { edit, conflict } = await searchParams;
+  const { edit, conflict, limit } = await searchParams;
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const data = getDataSource();
@@ -50,6 +56,13 @@ export default async function LessonPage({
               </Link>
             )}
           </div>
+
+          {limit === "1" && (
+            <div className="bg-warn-soft text-warn mt-4 rounded-md p-3 text-sm">
+              This lesson has reached its regeneration limit — edit it directly
+              instead.
+            </div>
+          )}
 
           {conflict === "1" && (
             <div className="bg-danger-soft text-danger mt-4 rounded-md p-3 text-sm">
@@ -123,6 +136,60 @@ export default async function LessonPage({
               Version {lesson.version} · {lesson.status.toLowerCase()}
             </p>
           </Card>
+
+          {!isDemoMode() && (
+            <Card>
+              <h2 className="mb-3 text-sm font-semibold tracking-wide uppercase">
+                Controls
+              </h2>
+              <form action={setLessonStatusAction} className="flex items-center gap-2">
+                <input type="hidden" name="projectId" value={id} />
+                <input type="hidden" name="lessonId" value={lessonId} />
+                <label className="sr-only" htmlFor="lesson-status">
+                  Review status
+                </label>
+                <select
+                  id="lesson-status"
+                  name="status"
+                  defaultValue={lesson.status}
+                  className="border-line w-full rounded-md border bg-white px-2 py-1.5 text-sm"
+                >
+                  <option value="DRAFT">Draft</option>
+                  <option value="REVIEW">In review</option>
+                  <option value="APPROVED">Approved</option>
+                </select>
+                <button
+                  type="submit"
+                  className="border-line hover:border-ink shrink-0 rounded-md border px-2.5 py-1.5 text-sm"
+                >
+                  Set
+                </button>
+              </form>
+              <form action={regenerateLessonAction} className="mt-3">
+                <input type="hidden" name="projectId" value={id} />
+                <input type="hidden" name="lessonId" value={lessonId} />
+                <button
+                  type="submit"
+                  className="border-line hover:border-ink w-full rounded-md border px-3 py-1.5 text-sm font-medium"
+                >
+                  Regenerate this lesson
+                </button>
+                <p className="text-ink-faint mt-1 text-xs">
+                  The current draft is kept and can be restored.
+                </p>
+              </form>
+              <form action={restorePreviousDraftAction} className="mt-2">
+                <input type="hidden" name="projectId" value={id} />
+                <input type="hidden" name="lessonId" value={lessonId} />
+                <button
+                  type="submit"
+                  className="text-ink-faint w-full text-xs hover:underline"
+                >
+                  Restore previous draft
+                </button>
+              </form>
+            </Card>
+          )}
 
           <Card>
             <h2 className="mb-3 text-sm font-semibold tracking-wide uppercase">

@@ -1017,6 +1017,72 @@ export const demoVault: VaultEntry[] = [
   },
 ];
 
+export const demoWorkbook = {
+  roadmap:
+    "Four modules, one build: find your one person (Module 1), assemble the Offer Spine (Module 2), price the outcome (Module 3), and sell your Founding Five (Module 4). Work through in order — each module's output is the next module's input.",
+  quick_start_checklist: [
+    "Write your one-sentence target: who, expensive problem, real cost",
+    "List your last three client projects for the Process excavation",
+    "Block two hours this week for Module 1",
+  ],
+  module_checklists: [
+    {
+      module_title: "Find the One Person",
+      items: [
+        "Named one real person your offer is built for",
+        "Wrote their problem in their words",
+        "Attached a measurable cost to the problem",
+      ],
+    },
+    {
+      module_title: "Build the Offer Spine",
+      items: [
+        "Drafted all four vertebrae",
+        "Cut every deliverable that doesn't serve the outcome",
+      ],
+    },
+    {
+      module_title: "Price the Outcome",
+      items: [
+        "Estimated the problem's annual cost",
+        "Set a price inside the 10x Gap",
+        "Passed all five Red Flag Filter checks",
+      ],
+    },
+    {
+      module_title: "Sell the Founding Five",
+      items: [
+        "Listed 20 warm contacts",
+        "Sent the three-sentence pitch to 10",
+        "Booked five founding buyers",
+      ],
+    },
+  ],
+  lesson_exercises: [
+    {
+      lesson_title: "The One Person Principle",
+      exercise:
+        "Write: '[one real person] struggles with [expensive problem in their words], which costs them [the real cost].'",
+    },
+    {
+      lesson_title: "The Offer Spine: Person, Problem, Process, Proof",
+      exercise: "Draft your Spine — one line per vertebra.",
+    },
+  ],
+  reflection_prompts: [
+    "Which vertebra of your Spine is weakest right now — and what would strengthen it fastest?",
+    "What did you cross off your deliverable list, and why were you holding onto it?",
+  ],
+  implementation_plan:
+    "Week 1: Modules 1–2 (target + Spine). Week 2: Module 3 (price + filter). Weeks 3–4: Module 4 outreach until five founding buyers say yes.",
+  completion_checklist: [
+    "One-page signature offer written",
+    "Price anchored to problem cost",
+    "Five founding buyers enrolled",
+    "Receipts collected for the public launch",
+  ],
+};
+
 export const demoJobs: ProcessingJob[] = [
   {
     id: "job-1",

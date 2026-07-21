@@ -21,6 +21,7 @@ import {
   demoProject,
   demoUsage,
   demoVault,
+  demoWorkbook,
 } from "../demo/seed";
 import type { GapQuestion, Lesson } from "../types";
 
@@ -123,6 +124,11 @@ export const demoDataSource: DataSource = {
   async listVault(userId, projectId) {
     if (userId !== DEMO_USER.id || projectId !== demoProject.id) return [];
     return clone(demoVault.sort((a, b) => a.suggestedOrder - b.suggestedOrder));
+  },
+
+  async getWorkbook(userId, projectId) {
+    if (userId !== DEMO_USER.id || projectId !== demoProject.id) return null;
+    return clone(demoWorkbook);
   },
 
   async listJobs(userId, projectId) {

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
 import { isDemoMode } from "@/lib/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { enqueueLessonGeneration } from "@/lib/jobs";
 
 /** All blueprint edits require an unapproved (DRAFT) blueprint owned
  * by the caller; RLS enforces ownership, these guards enforce state. */
@@ -77,15 +78,24 @@ export async function approveBlueprintAction(formData: FormData) {
   const blueprintId = String(formData.get("blueprintId") ?? "");
   const supabase = await createSupabaseServerClient();
 
-  await supabase
+  const { data: approved } = await supabase
     .from("course_blueprints")
     .update({ status: "APPROVED", approved_at: new Date().toISOString() })
     .eq("id", blueprintId)
     .eq("project_id", projectId)
-    .eq("status", "DRAFT");
-  // Lesson generation (stage 9) starts from this checkpoint in
-  // Milestone 5; approval is recorded now so the checkpoint is real.
+    .eq("status", "DRAFT")
+    .select("id");
+  if ((approved ?? []).length === 0) return;
+
+  // The approval checkpoint releases lesson generation (stage 9).
+  await supabase
+    .from("projects")
+    .update({ status: "GENERATING_LESSONS" })
+    .eq("id", projectId)
+    .eq("status", "AWAITING_BLUEPRINT_APPROVAL");
+  await enqueueLessonGeneration(projectId);
   revalidatePath(`/projects/${projectId}/blueprint`);
+  revalidatePath(`/projects/${projectId}/course`);
 }
 
 export async function moveModuleAction(formData: FormData) {

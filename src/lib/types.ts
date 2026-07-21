@@ -307,6 +307,16 @@ export interface VaultEntry {
   suggestedOrder: number;
 }
 
+export interface Workbook {
+  roadmap: string;
+  quick_start_checklist: string[];
+  module_checklists: { module_title: string; items: string[] }[];
+  lesson_exercises: { lesson_title: string; exercise: string }[];
+  reflection_prompts: string[];
+  implementation_plan: string;
+  completion_checklist: string[];
+}
+
 export interface UsageEvent {
   id: string;
   projectId: string;

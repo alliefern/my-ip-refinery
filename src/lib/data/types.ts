@@ -12,6 +12,7 @@ import type {
   TranscriptChunk,
   UsageEvent,
   VaultEntry,
+  Workbook,
 } from "../types";
 
 /**
@@ -52,6 +53,7 @@ export interface DataSource {
   ): Promise<{ ok: true } | { ok: false; reason: "version_conflict" }>;
 
   listVault(userId: string, projectId: string): Promise<VaultEntry[]>;
+  getWorkbook(userId: string, projectId: string): Promise<Workbook | null>;
   listJobs(userId: string, projectId: string): Promise<ProcessingJob[]>;
   listUsage(userId: string, projectId: string): Promise<UsageEvent[]>;
 }

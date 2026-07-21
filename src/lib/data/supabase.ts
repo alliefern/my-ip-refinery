@@ -334,6 +334,18 @@ export const supabaseDataSource: DataSource = {
     }));
   },
 
+  async getWorkbook(_userId, projectId) {
+    const supabase = await db();
+    const { data, error } = await supabase
+      .from("projects")
+      .select("workbook_json")
+      .eq("id", projectId)
+      .maybeSingle();
+    if (error) throw error;
+    const workbook = data?.workbook_json ?? {};
+    return Object.keys(workbook).length > 0 ? workbook : null;
+  },
+
   async listJobs(_userId, projectId) {
     const supabase = await db();
     const { data, error } = await supabase

@@ -356,5 +356,105 @@ export function createDb() {
       }
       return bp.id;
     },
+
+    async getApprovedBlueprint(projectId) {
+      const { data, error } = await supabase
+        .from("course_blueprints")
+        .select("*")
+        .eq("project_id", projectId)
+        .eq("status", "APPROVED")
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+
+    async listBlueprintModules(blueprintId) {
+      const { data, error } = await supabase
+        .from("modules")
+        .select("*")
+        .eq("course_blueprint_id", blueprintId)
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+
+    async listModuleLessons(moduleId) {
+      const { data, error } = await supabase
+        .from("lessons")
+        .select("*")
+        .eq("module_id", moduleId)
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+
+    async getLessonRow(lessonId) {
+      const { data, error } = await supabase
+        .from("lessons")
+        .select("*")
+        .eq("id", lessonId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+
+    async saveLessonGeneration(lessonId, fields) {
+      await supabase.from("lessons").update(fields).eq("id", lessonId);
+    },
+
+    async replaceLessonSources(lessonId, rows) {
+      await supabase.from("lesson_sources").delete().eq("lesson_id", lessonId);
+      if (rows.length === 0) return;
+      const { error } = await supabase
+        .from("lesson_sources")
+        .insert(rows.map((row) => ({ ...row, lesson_id: lessonId })));
+      if (error) throw error;
+    },
+
+    async listAllProjectChunks(projectId) {
+      const { data, error } = await supabase
+        .from("transcript_chunks")
+        .select(
+          "id, source_asset_id, start_seconds, end_seconds, clean_text, source_assets!inner(project_id, display_title)",
+        )
+        .eq("source_assets.project_id", projectId)
+        .eq("status", "DONE");
+      if (error) throw error;
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        source_asset_id: row.source_asset_id,
+        start_seconds: row.start_seconds,
+        end_seconds: row.end_seconds,
+        clean_text: row.clean_text,
+        assetTitle: row.source_assets.display_title,
+      }));
+    },
+
+    async listProjectIpItemsDetailed(projectId) {
+      const { data, error } = await supabase
+        .from("ip_items")
+        .select("source_asset_id, title, type, start_seconds")
+        .eq("project_id", projectId);
+      if (error) throw error;
+      return data ?? [];
+    },
+
+    async replaceVaultEntries(projectId, rows) {
+      await supabase.from("vault_entries").delete().eq("project_id", projectId);
+      if (rows.length === 0) return;
+      const { error } = await supabase
+        .from("vault_entries")
+        .insert(rows.map((row) => ({ ...row, project_id: projectId })));
+      if (error) throw error;
+    },
+
+    async saveProjectWorkbook(projectId, workbook) {
+      await supabase
+        .from("projects")
+        .update({ workbook_json: workbook })
+        .eq("id", projectId);
+    },
   };
 }

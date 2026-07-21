@@ -16,6 +16,7 @@ const NAV = [
   { slug: "course", label: "Course Editor" },
   { slug: "vault", label: "Bonus Vault" },
   { slug: "exports", label: "Exports" },
+  { slug: "settings", label: "Settings" },
 ] as const;
 
 export default async function ProjectLayout({

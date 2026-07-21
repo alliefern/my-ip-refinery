@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { isDemoMode } from "@/lib/config";
-import { Card, PageHeader } from "@/components/ui";
+import { getDataSource } from "@/lib/data";
+import { Card, EmptyState, PageHeader } from "@/components/ui";
 
 export const metadata = { title: "Exports" };
 
-const PACKAGE_FILES = [
+const PACKAGE_FILES: [string, string][] = [
   ["01-course-positioning.md", "Positioning, promise and audience"],
   ["02-course-blueprint.md", "Modules, lessons and rationale"],
   ["03-full-course-content.docx", "Every lesson, editable Word document"],
@@ -14,7 +14,7 @@ const PACKAGE_FILES = [
   ["06-bonus-video-vault.md", "The organized training library"],
   ["07-source-map.csv", "Lesson → source training → timestamp map"],
   ["08-structured-course.json", "Portable structured export"],
-] as const;
+];
 
 export default async function ExportsPage({
   params,
@@ -22,44 +22,53 @@ export default async function ExportsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  void id;
   const user = await getSessionUser();
   if (!user) redirect("/login");
+  const blueprint = await getDataSource().getBlueprint(user.id, id);
 
   return (
     <div>
       <PageHeader
         title="Export centre"
-        subtitle="Exports always reflect your latest saved edits, never an earlier AI draft."
+        subtitle="Every file is generated fresh from your latest saved edits, never from an earlier AI draft."
       />
-      <Card>
-        <h2 className="text-lg">Complete course package (ZIP)</h2>
-        <ul className="border-line mt-4 divide-y divide-(--color-line) border-t">
-          {PACKAGE_FILES.map(([file, description]) => (
-            <li key={file} className="flex items-center justify-between gap-3 py-2.5">
-              <div>
-                <p className="font-mono text-sm">{file}</p>
-                <p className="text-ink-faint text-xs">{description}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5">
-          {isDemoMode() ? (
-            <p className="bg-warn-soft text-warn inline-block rounded-md px-3 py-2 text-sm">
-              Export generation activates outside demo mode (Milestone 6). The
-              package layout above is final.
-            </p>
-          ) : (
-            <button
-              type="button"
+      {!blueprint ? (
+        <EmptyState
+          title="Nothing to export yet"
+          body="Exports become available once your course blueprint exists."
+        />
+      ) : (
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg">Complete course package</h2>
+            <a
+              href={`/api/projects/${id}/export?file=zip`}
               className="bg-ink text-paper rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
             >
-              Generate package
-            </button>
-          )}
-        </div>
-      </Card>
+              Download ZIP
+            </a>
+          </div>
+          <ul className="border-line mt-4 divide-y divide-(--color-line) border-t">
+            {PACKAGE_FILES.map(([file, description]) => (
+              <li
+                key={file}
+                className="flex items-center justify-between gap-3 py-2.5"
+              >
+                <div>
+                  <p className="font-mono text-sm">{file}</p>
+                  <p className="text-ink-faint text-xs">{description}</p>
+                </div>
+                <a
+                  href={`/api/projects/${id}/export?file=${file}`}
+                  className="border-line hover:border-ink shrink-0 rounded-md border px-3 py-1 text-xs font-medium"
+                >
+                  Download
+                </a>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </div>
   );
 }

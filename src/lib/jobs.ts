@@ -47,6 +47,67 @@ export async function enqueueBlueprintJob(projectId: string): Promise<void> {
   if (error && error.code !== "23505") throw error;
 }
 
+/** Enqueue full lesson generation after blueprint approval. */
+export async function enqueueLessonGeneration(projectId: string): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  const { data: active } = await admin
+    .from("processing_jobs")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("job_type", "generate_lessons")
+    .in("status", ["PENDING", "RUNNING"])
+    .limit(1);
+  if ((active ?? []).length > 0) return;
+  const { error } = await admin.from("processing_jobs").insert({
+    project_id: projectId,
+    job_type: "generate_lessons",
+    idempotency_key: `lessons:${projectId}:${Date.now()}`,
+  });
+  if (error && error.code !== "23505") throw error;
+}
+
+/** Enqueue a single-lesson regeneration (key carries the lesson id). */
+export async function enqueueRegenerateLesson(
+  projectId: string,
+  lessonId: string,
+): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  const { data: active } = await admin
+    .from("processing_jobs")
+    .select("id, idempotency_key")
+    .eq("project_id", projectId)
+    .eq("job_type", "regenerate_lesson")
+    .in("status", ["PENDING", "RUNNING"]);
+  if ((active ?? []).some((j) => j.idempotency_key.split(":")[1] === lessonId)) {
+    return;
+  }
+  const { error } = await admin.from("processing_jobs").insert({
+    project_id: projectId,
+    job_type: "regenerate_lesson",
+    idempotency_key: `regen:${lessonId}:${Date.now()}`,
+  });
+  if (error && error.code !== "23505") throw error;
+}
+
+/** Enqueue vault + workbook generation. */
+export async function enqueueCourseAssets(projectId: string): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  const { data: active } = await admin
+    .from("processing_jobs")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("job_type", "generate_course_assets")
+    .in("status", ["PENDING", "RUNNING"])
+    .limit(1);
+  if ((active ?? []).length > 0) return;
+  const { error } = await admin.from("processing_jobs").insert({
+    project_id: projectId,
+    job_type: "generate_course_assets",
+    idempotency_key: `assets:${projectId}:${Date.now()}`,
+  });
+  if (error && error.code !== "23505") throw error;
+}
+
 /** Re-arm a failed job for retry without duplicating it. */
 export async function requeueFailedJob(
   projectId: string,
