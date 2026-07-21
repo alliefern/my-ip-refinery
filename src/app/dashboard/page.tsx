@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getDataSource } from "@/lib/data";
 import { signOutAction } from "@/app/auth/actions";
 import { Card, EmptyState, Logo, PageHeader, StatusBadge } from "@/components/ui";
+import { FeedbackButton } from "@/components/feedback-button";
 
 export const metadata = { title: "Projects" };
 
@@ -20,14 +21,17 @@ export default async function DashboardPage() {
         <span className="flex items-baseline gap-3">
           <span className="text-ink-faint text-sm">{user.email}</span>
           {!user.isDemo && (
-            <form action={signOutAction}>
-              <button
-                type="submit"
-                className="text-ink-faint hover:text-ink text-sm underline"
-              >
-                Sign out
-              </button>
-            </form>
+            <>
+              <FeedbackButton />
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  className="text-ink-faint hover:text-ink text-sm underline"
+                >
+                  Sign out
+                </button>
+              </form>
+            </>
           )}
         </span>
       </div>

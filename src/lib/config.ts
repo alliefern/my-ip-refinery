@@ -31,3 +31,6 @@ export const models = {
   text: process.env.OPENAI_TEXT_MODEL ?? "gpt-4.1",
   transcription: process.env.OPENAI_TRANSCRIPTION_MODEL ?? "gpt-4o-transcribe",
 } as const;
+
+export const feedbackNotifyEmail =
+  process.env.FEEDBACK_NOTIFY_EMAIL ?? "modernglossboss@gmail.com";
