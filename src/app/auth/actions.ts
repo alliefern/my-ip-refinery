@@ -38,9 +38,19 @@ export async function magicLinkAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${appUrl()}/auth/callback` },
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: `${appUrl()}/auth/callback`,
+    },
   });
-  if (error) redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  if (error) {
+    const message = /(not found|signups not allowed|user not found)/i.test(
+      error.message,
+    )
+      ? "No account found for that email. Create an account first."
+      : error.message;
+    redirect(`/login?error=${encodeURIComponent(message)}`);
+  }
   redirect("/login?notice=magic-link-sent");
 }
 

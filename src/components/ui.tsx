@@ -1,6 +1,21 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ProjectStatus, SupportType } from "@/lib/types";
 import { PROJECT_STATUS_LABELS, USER_ACTION_STATUSES } from "@/lib/status";
+import { brand } from "@/lib/config";
+
+export function Logo({ className = "h-8 w-auto" }: { className?: string }) {
+  return (
+    <Image
+      src="/logo.png"
+      alt={brand.name}
+      width={1885}
+      height={345}
+      className={className}
+      priority
+    />
+  );
+}
 
 export function Card({
   children,

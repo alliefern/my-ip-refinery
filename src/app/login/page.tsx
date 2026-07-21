@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { brand, isDemoMode } from "@/lib/config";
-import { Card } from "@/components/ui";
+import { Card, Logo } from "@/components/ui";
 import { magicLinkAction, signInAction, signUpAction } from "@/app/auth/actions";
 
 export const metadata = { title: "Sign in" };
@@ -20,8 +20,8 @@ export default async function LoginPage({
   if (isDemoMode()) {
     return (
       <main className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-4">
-        <h1 className="text-4xl">{brand.name}</h1>
-        <p className="text-ink-soft mt-2">{brand.tagline}.</p>
+        <Logo className="h-10 w-auto" />
+        <p className="text-ink-soft mt-3">{brand.tagline}.</p>
         <Card className="mt-8">
           <p className="text-sm">
             The app is running in <strong>demo mode</strong>. Authentication is
@@ -47,8 +47,8 @@ export default async function LoginPage({
 
   return (
     <main className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-4">
-      <h1 className="text-4xl">{brand.name}</h1>
-      <p className="text-ink-soft mt-2">{brand.tagline}.</p>
+      <Logo className="h-10 w-auto" />
+      <p className="text-ink-soft mt-3">{brand.tagline}.</p>
 
       {error && (
         <div className="bg-danger-soft text-danger mt-6 rounded-md p-3 text-sm" role="alert">
@@ -101,8 +101,8 @@ export default async function LoginPage({
 
         <form action={magicLinkAction} className="border-line mt-4 border-t pt-4">
           <p className="text-ink-faint mb-2 text-xs">
-            Prefer no password? Enter your email above… or here, and we'll send
-            a magic link.
+            Already have an account and prefer no password? Enter your email
+            and we'll send a magic link.
           </p>
           <div className="flex gap-2">
             <label className="sr-only" htmlFor="magic-email">

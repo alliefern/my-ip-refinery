@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getDataSource } from "@/lib/data";
-import { brand } from "@/lib/config";
-import { StatusBadge } from "@/components/ui";
+import { Logo, StatusBadge } from "@/components/ui";
 
 const NAV = [
   { slug: "", label: "Overview" },
@@ -36,8 +35,8 @@ export default async function ProjectLayout({
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-ink-faint hover:text-ink text-sm">
-            {brand.name}
+          <Link href="/dashboard" className="opacity-80 hover:opacity-100">
+            <Logo className="h-5 w-auto" />
           </Link>
           <span className="text-ink-faint">/</span>
           <span className="font-display text-lg">{project.name}</span>

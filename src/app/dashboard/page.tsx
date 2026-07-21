@@ -2,9 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getDataSource } from "@/lib/data";
-import { brand } from "@/lib/config";
 import { signOutAction } from "@/app/auth/actions";
-import { Card, EmptyState, PageHeader, StatusBadge } from "@/components/ui";
+import { Card, EmptyState, Logo, PageHeader, StatusBadge } from "@/components/ui";
 
 export const metadata = { title: "Projects" };
 
@@ -17,7 +16,7 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       <div className="mb-10 flex items-baseline justify-between">
-        <span className="font-display text-xl">{brand.name}</span>
+        <Logo className="h-7 w-auto" />
         <span className="flex items-baseline gap-3">
           <span className="text-ink-faint text-sm">{user.email}</span>
           {!user.isDemo && (
