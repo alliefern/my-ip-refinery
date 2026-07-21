@@ -1,0 +1,10 @@
+{
+  "name": "myiprefinery-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Background media-processing worker (FFmpeg, transcription, AI stages)",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.52.0"
+  }
+}

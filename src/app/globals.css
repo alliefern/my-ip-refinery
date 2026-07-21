@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/* Editorial, calm, high-trust. Paper-and-ink palette; a single russet
+   accent. No AI gradients. */
+@theme {
+  --color-paper: #faf8f4;
+  --color-surface: #ffffff;
+  --color-ink: #1c1a17;
+  --color-ink-soft: #57524a;
+  --color-ink-faint: #8a8478;
+  --color-line: #e5e0d6;
+  --color-accent: #9a4b22;
+  --color-accent-soft: #f4e8e0;
+  --color-ok: #3d6b46;
+  --color-ok-soft: #e6efe7;
+  --color-warn: #8a6414;
+  --color-warn-soft: #f6eed7;
+  --color-danger: #8c3030;
+  --color-danger-soft: #f5e3e3;
+
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia,
+    "Times New Roman", serif;
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Long-form lesson reading */
+.prose-lesson {
+  max-width: 42rem;
+  line-height: 1.75;
+  font-size: 1.0625rem;
+}
+.prose-lesson h2 {
+  font-size: 1.5rem;
+  margin: 2rem 0 0.75rem;
+}
+.prose-lesson h3 {
+  font-size: 1.2rem;
+  margin: 1.5rem 0 0.5rem;
+}
+.prose-lesson p { margin: 0.75rem 0; }
+.prose-lesson ul, .prose-lesson ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+.prose-lesson ul { list-style: disc; }
+.prose-lesson ol { list-style: decimal; }
+.prose-lesson li { margin: 0.35rem 0; }
+.prose-lesson blockquote {
+  border-left: 3px solid var(--color-accent);
+  padding-left: 1rem;
+  color: var(--color-ink-soft);
+  margin: 1rem 0;
+}
+.prose-lesson strong { font-weight: 650; }
+.prose-lesson em { font-style: italic; }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

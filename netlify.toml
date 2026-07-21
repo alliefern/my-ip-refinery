@@ -1,0 +1,13 @@
+# Deploy as its own Netlify site pointed at this repository.
+# The Next.js runtime is auto-detected by Netlify; no manual plugin
+# configuration is required on current Netlify + Next 15.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Long-running media processing NEVER happens in Netlify functions.
+# It belongs to the background worker (see worker/README.md).
