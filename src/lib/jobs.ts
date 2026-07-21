@@ -23,6 +23,30 @@ export async function enqueueTranscribeJob(
   if (error && error.code !== "23505") throw error;
 }
 
+/**
+ * Enqueue blueprint generation. Deliberately re-runnable (choosing a
+ * new direction regenerates the draft), but never stacked: an existing
+ * queued/running blueprint job wins.
+ */
+export async function enqueueBlueprintJob(projectId: string): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  const { data: active } = await admin
+    .from("processing_jobs")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("job_type", "generate_blueprint")
+    .in("status", ["PENDING", "RUNNING"])
+    .limit(1);
+  if ((active ?? []).length > 0) return;
+
+  const { error } = await admin.from("processing_jobs").insert({
+    project_id: projectId,
+    job_type: "generate_blueprint",
+    idempotency_key: `blueprint:${projectId}:${Date.now()}`,
+  });
+  if (error && error.code !== "23505") throw error;
+}
+
 /** Re-arm a failed job for retry without duplicating it. */
 export async function requeueFailedJob(
   projectId: string,

@@ -13,13 +13,12 @@ is the moat; see `docs/ARCHITECTURE.md`.
 
 ## Status
 
-Milestone 3 of 6 complete: foundation + demo experience, the upload +
-transcription pipeline, and the IP intelligence engine (per-chunk
-extraction, per-training synthesis, cross-training IP map with
-contradiction/gap detection and course opportunities — see
-`worker/prompts/`). Curriculum architecture (Milestone 4) is next. See
-`docs/DECISIONS.md` for the build log and `docs/ARCHITECTURE.md` for
-the pipeline design.
+Milestone 4 of 6 complete: foundation + demo experience, the upload +
+transcription pipeline, the IP intelligence engine, and curriculum
+architecture (blueprint generation from the chosen course direction,
+editable/reorderable curriculum, approval checkpoint). Lesson
+generation (Milestone 5) is next. See `docs/DECISIONS.md` for the
+build log and `docs/ARCHITECTURE.md` for the pipeline design.
 
 ## Quick start (demo mode — zero credentials)
 

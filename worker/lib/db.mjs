@@ -245,5 +245,116 @@ export function createDb() {
         .update({ ip_map_json: map })
         .eq("id", projectId);
     },
+
+    async getProjectDetail(projectId) {
+      const { data, error } = await supabase
+        .from("projects")
+        .select(
+          "id, user_id, deleted_at, status, intake_json, voice_settings_json, ip_map_json, selected_course_opportunity_id",
+        )
+        .eq("id", projectId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+
+    async getOpportunity(opportunityId) {
+      const { data, error } = await supabase
+        .from("course_opportunities")
+        .select("*")
+        .eq("id", opportunityId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+
+    async listAnsweredGapQuestions(projectId) {
+      const { data, error } = await supabase
+        .from("gap_questions")
+        .select("question, answer")
+        .eq("project_id", projectId)
+        .eq("status", "ANSWERED")
+        .not("answer", "is", null);
+      if (error) throw error;
+      return data ?? [];
+    },
+
+    /** Blueprint generation is retryable: unapproved drafts are
+     * replaced wholesale; approved blueprints are never touched. */
+    async deleteDraftBlueprints(projectId) {
+      await supabase
+        .from("course_blueprints")
+        .delete()
+        .eq("project_id", projectId)
+        .eq("status", "DRAFT");
+    },
+
+    async nextBlueprintVersion(projectId) {
+      const { data } = await supabase
+        .from("course_blueprints")
+        .select("version")
+        .eq("project_id", projectId)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (data?.version ?? 0) + 1;
+    },
+
+    async insertBlueprintTree(projectId, version, blueprint) {
+      const { data: bp, error } = await supabase
+        .from("course_blueprints")
+        .insert({
+          project_id: projectId,
+          version,
+          title: blueprint.positioning.title,
+          subtitle: blueprint.positioning.subtitle,
+          promise: blueprint.positioning.promise,
+          transformation: blueprint.positioning.transformation,
+          audience: blueprint.positioning.audience,
+          positioning_json: blueprint.positioning,
+          status: "DRAFT",
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      for (let mi = 0; mi < blueprint.modules.length; mi++) {
+        const mod = blueprint.modules[mi];
+        const { data: moduleRow, error: moduleError } = await supabase
+          .from("modules")
+          .insert({
+            course_blueprint_id: bp.id,
+            position: mi + 1,
+            title: mod.title,
+            purpose: mod.purpose,
+            outcome: mod.outcome,
+            rationale: mod.rationale,
+          })
+          .select("id")
+          .single();
+        if (moduleError) throw moduleError;
+
+        const lessonRows = mod.lessons.map((lesson, li) => ({
+          module_id: moduleRow.id,
+          position: li + 1,
+          title: lesson.title,
+          objective: lesson.objective,
+          content_markdown: "",
+          lesson_structure_json: {
+            planned_elements: lesson.planned_elements,
+            source_trainings: lesson.source_trainings,
+          },
+          source_strength_score: lesson.source_strength,
+          transformation_value_score: lesson.transformation_value,
+          creator_uniqueness_score: lesson.creator_uniqueness,
+          status: "DRAFT",
+        }));
+        const { error: lessonError } = await supabase
+          .from("lessons")
+          .insert(lessonRows);
+        if (lessonError) throw lessonError;
+      }
+      return bp.id;
+    },
   };
 }

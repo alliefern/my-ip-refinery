@@ -7,7 +7,11 @@
 
 import { createDb } from "./lib/db.mjs";
 import { runTranscribeAsset } from "./lib/pipeline.mjs";
-import { runBuildIpMap, runExtractIp } from "./lib/ai-pipeline.mjs";
+import {
+  runBuildIpMap,
+  runExtractIp,
+  runGenerateBlueprint,
+} from "./lib/ai-pipeline.mjs";
 
 const required = [
   "SUPABASE_URL",
@@ -36,6 +40,7 @@ const HANDLERS = {
   transcribe_asset: runTranscribeAsset,
   extract_ip: runExtractIp,
   build_ip_map: runBuildIpMap,
+  generate_blueprint: runGenerateBlueprint,
 };
 
 async function tick() {

@@ -18,3 +18,5 @@ and document rather than block on questions.
 | 11 | Prompt library lives in `worker/prompts/` (not `src/prompts/`) | Prompts execute in the worker; keeping them beside their runtime avoids a cross-package import while staying versioned and separate from UI code. |
 | 12 | Map-level analysis stored as `projects.ip_map_json`, syntheses as `source_assets.synthesis_json` | These are read-only UI panels; relational tables (ip_items, opportunities, gap_questions) remain the structured outputs that drive workflows. |
 | 13 | Invalid structured output → one re-ask, then retryable job failure | Balances resilience against runaway token spend; both calls' tokens are recorded in usage_events. |
+| 14 | Curriculum reordering uses accessible up/down controls, not drag-and-drop (yet) | Keyboard-accessible and dependency-free for the MVP; a dnd layer can be added over the same position-swap actions later. |
+| 15 | Blueprint regeneration replaces only DRAFT blueprints | An approved blueprint is a contract with the user; choosing a new direction creates the next version instead of mutating approved work. |

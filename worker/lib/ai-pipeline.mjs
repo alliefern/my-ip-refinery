@@ -8,6 +8,7 @@
 import * as extraction from "../prompts/extraction-v1.mjs";
 import * as synthesis from "../prompts/synthesis-v1.mjs";
 import * as ipmap from "../prompts/ipmap-v1.mjs";
+import * as blueprint from "../prompts/blueprint-v1.mjs";
 import { estimateTextCostCents, runStructured } from "./llm.mjs";
 import { stitchChunks } from "./stitch.mjs";
 
@@ -226,6 +227,90 @@ export async function runBuildIpMap(db, job) {
     data.gap_questions.length > 0
       ? "AWAITING_GAP_ANSWERS"
       : "AWAITING_COURSE_SELECTION",
+  );
+}
+
+/** generate_blueprint job (stage 8): fires after the creator selects a
+ * course direction; replaces any unapproved draft on retry. */
+export async function runGenerateBlueprint(db, job) {
+  const project = await db.getProjectDetail(job.project_id);
+  if (!project || project.deleted_at) {
+    throw fatal("Project deleted", "PROJECT_DELETED");
+  }
+  if (!project.selected_course_opportunity_id) {
+    throw fatal(
+      "No course direction selected",
+      "INSUFFICIENT_SOURCE",
+      "Choose a course direction before generating the blueprint.",
+    );
+  }
+  const opportunity = await db.getOpportunity(
+    project.selected_course_opportunity_id,
+  );
+  if (!opportunity) {
+    throw fatal(
+      "Selected opportunity missing",
+      "INSUFFICIENT_SOURCE",
+      "The selected course direction no longer exists — choose again.",
+    );
+  }
+
+  const config = modelConfig();
+  const assets = await db.listMediaAssets(job.project_id);
+  const ready = assets.filter(
+    (a) => a.synthesis_json && Object.keys(a.synthesis_json).length > 0,
+  );
+  const assetTitle = new Map(assets.map((a) => [a.id, a.display_title]));
+  const ipItems = await db.listProjectIpItems(job.project_id);
+  const gapAnswers = await db.listAnsweredGapQuestions(job.project_id);
+
+  const { data, usage } = await runStructured(
+    blueprint,
+    blueprint.buildUserPrompt({
+      intake: project.intake_json ?? {},
+      voice: project.voice_settings_json ?? {},
+      opportunity: {
+        title: opportunity.title,
+        audience: opportunity.audience,
+        transformation: opportunity.transformation,
+        rationale: opportunity.rationale,
+        missing_material: opportunity.missing_material_json ?? [],
+      },
+      ipMap: project.ip_map_json ?? {},
+      syntheses: ready.map((a) => ({
+        assetTitle: a.display_title,
+        synthesis: a.synthesis_json,
+      })),
+      ipIndex: ipItems.map((item) => ({
+        type: item.type,
+        title: item.title,
+        content: (item.content ?? "").slice(0, 300),
+        assetTitle: assetTitle.get(item.source_asset_id) ?? "unknown",
+      })),
+      gapAnswers,
+    }),
+    config,
+  );
+
+  await db.deleteDraftBlueprints(job.project_id);
+  const version = await db.nextBlueprintVersion(job.project_id);
+  await db.insertBlueprintTree(job.project_id, version, data);
+
+  await db.recordUsage(job.project_id, project.user_id, {
+    operation: "blueprint_generation",
+    model: config.model,
+    input_tokens: usage.inputTokens,
+    output_tokens: usage.outputTokens,
+    estimated_cost_minor_units: estimateTextCostCents(
+      config.model,
+      usage.inputTokens,
+      usage.outputTokens,
+    ),
+  });
+  await db.updateProjectStatusIf(
+    job.project_id,
+    ["AWAITING_COURSE_SELECTION"],
+    "AWAITING_BLUEPRINT_APPROVAL",
   );
 }
 
