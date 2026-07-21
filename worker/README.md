@@ -27,6 +27,10 @@ Required env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
 
 ## Status
 
-Skeleton only (Milestone 1). The full worker implementation — FFmpeg
-pipeline, transcription adapter with mocked-API tests, retry/backoff —
-lands in Milestone 2 per the build plan.
+Milestone 2 complete: the `transcribe_asset` pipeline is implemented —
+storage download, FFmpeg probe/extract/slice, chunked transcription
+with per-chunk idempotency (retries skip finished chunks), overlap-safe
+stitching helpers, usage recording, retry/backoff with error codes.
+Run `npm test` here for the worker's unit tests (stitching, chunking,
+transcription adapter against a mocked API). AI extraction jobs land in
+Milestone 3.

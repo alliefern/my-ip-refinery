@@ -1,9 +1,13 @@
 {
   "name": "myiprefinery-worker",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Background media-processing worker (FFmpeg, transcription, AI stages)",
+  "scripts": {
+    "start": "node index.mjs",
+    "test": "node --test \"test/*.test.mjs\""
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.52.0"
   }

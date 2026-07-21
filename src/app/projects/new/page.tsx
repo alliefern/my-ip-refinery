@@ -3,15 +3,26 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { isDemoMode } from "@/lib/config";
 import { BackLink, Card, PageHeader } from "@/components/ui";
+import { createProjectAction } from "./actions";
 
 export const metadata = { title: "New project" };
 
+const ERRORS: Record<string, string> = {
+  "name-required": "Give the project a name before continuing.",
+  "project-limit": "You've reached your active-project limit — archive or delete one first.",
+  "create-failed": "Something went wrong creating the project. Try again.",
+};
+
 /**
  * Project intake wizard. In demo mode the form is fully rendered and
- * navigable but submission is disabled — creating real projects begins
- * with the Supabase activation milestone.
+ * navigable but submission is disabled.
  */
-export default async function NewProjectPage() {
+export default async function NewProjectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
@@ -23,10 +34,29 @@ export default async function NewProjectPage() {
         subtitle="Answer what you can — everything is editable later, and non-essential questions can be skipped."
       />
 
-      <form className="space-y-8">
+      {error && ERRORS[error] && (
+        <div className="bg-danger-soft text-danger mb-6 rounded-md p-3 text-sm" role="alert">
+          {ERRORS[error]}
+        </div>
+      )}
+
+      <form action={createProjectAction} className="space-y-8">
         <Card>
           <h2 className="mb-4 text-lg">Course purpose</h2>
           <div className="space-y-4 text-sm">
+            <div>
+              <label className="mb-1 block font-medium" htmlFor="name">
+                Project name
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                placeholder="e.g. Signature Offer Trainings"
+                className="border-line w-full rounded-md border bg-white px-3 py-2"
+              />
+            </div>
             <div>
               <label className="mb-1 block font-medium" htmlFor="purpose">
                 What do you want to create?

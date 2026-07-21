@@ -13,8 +13,11 @@ is the moat; see `docs/ARCHITECTURE.md`.
 
 ## Status
 
-Milestone 1 of 6 (foundation + demo experience). See `docs/DECISIONS.md`
-for the build log and `docs/ARCHITECTURE.md` for the full pipeline design.
+Milestone 2 of 6 complete (foundation + demo experience; upload +
+transcription pipeline). Real auth, direct-to-storage uploads, the job
+queue and the FFmpeg/transcription worker are implemented; IP
+extraction (Milestone 3) is next. See `docs/DECISIONS.md` for the build
+log and `docs/ARCHITECTURE.md` for the full pipeline design.
 
 ## Quick start (demo mode — zero credentials)
 

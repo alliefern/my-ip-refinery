@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui";
 
 const NAV = [
   { slug: "", label: "Overview" },
+  { slug: "sources", label: "Sources" },
   { slug: "transcripts", label: "Transcripts" },
   { slug: "ip-map", label: "IP Map" },
   { slug: "opportunities", label: "Course Direction" },
