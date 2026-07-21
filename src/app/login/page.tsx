@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { brand, isDemoMode } from "@/lib/config";
 import { Card, Logo } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { magicLinkAction, signInAction } from "@/app/auth/actions";
 
 export const metadata = { title: "Sign in" };
@@ -89,12 +90,12 @@ export default async function LoginPage({
               className="border-line focus:border-ink w-full rounded-md border bg-white px-3 py-2 text-sm"
             />
           </div>
-          <button
-            type="submit"
-            className="bg-ink text-paper w-full rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
+          <SubmitButton
+            pendingText="Signing in…"
+            className="bg-ink text-paper w-full rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-70"
           >
             Sign in
-          </button>
+          </SubmitButton>
         </form>
 
         <form action={magicLinkAction} className="border-line mt-4 border-t pt-4">
@@ -114,12 +115,12 @@ export default async function LoginPage({
               placeholder="you@example.com"
               className="border-line focus:border-ink w-full rounded-md border bg-white px-3 py-2 text-sm"
             />
-            <button
-              type="submit"
-              className="border-line hover:border-ink shrink-0 rounded-md border px-3 py-2 text-sm font-medium"
+            <SubmitButton
+              pendingText="Sending…"
+              className="border-line hover:border-ink shrink-0 rounded-md border px-3 py-2 text-sm font-medium disabled:opacity-70"
             >
               Send link
-            </button>
+            </SubmitButton>
           </div>
         </form>
       </Card>

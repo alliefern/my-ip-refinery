@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { isDemoMode } from "@/lib/config";
 import { Card, Logo } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { signUpAction } from "@/app/auth/actions";
 
 export const metadata = {
@@ -76,12 +77,12 @@ export default async function CreateAccessPage({
               className="border-line focus:border-ink w-full rounded-md border bg-white px-3 py-2 text-sm"
             />
           </div>
-          <button
-            type="submit"
-            className="bg-ink text-paper w-full rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
+          <SubmitButton
+            pendingText="Creating account…"
+            className="bg-ink text-paper w-full rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-70"
           >
             Create account
-          </button>
+          </SubmitButton>
         </form>
       </Card>
 
