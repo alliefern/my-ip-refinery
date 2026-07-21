@@ -11,7 +11,7 @@ export function Logo({ className = "h-8 w-auto" }: { className?: string }) {
       alt={brand.name}
       width={1885}
       height={345}
-      className={className}
+      className={`self-start ${className}`}
       priority
     />
   );
