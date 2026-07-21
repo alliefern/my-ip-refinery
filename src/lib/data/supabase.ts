@@ -20,6 +20,7 @@ import type {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 function mapProject(row: any): Project {
+  const ipMap = row.ip_map_json ?? {};
   return {
     id: row.id,
     userId: row.user_id,
@@ -28,6 +29,7 @@ function mapProject(row: any): Project {
     selectedCourseOpportunityId: row.selected_course_opportunity_id,
     intake: row.intake_json ?? {},
     voiceSettings: row.voice_settings_json ?? {},
+    ipMap: Object.keys(ipMap).length > 0 ? ipMap : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

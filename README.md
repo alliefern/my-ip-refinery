@@ -13,11 +13,13 @@ is the moat; see `docs/ARCHITECTURE.md`.
 
 ## Status
 
-Milestone 2 of 6 complete (foundation + demo experience; upload +
-transcription pipeline). Real auth, direct-to-storage uploads, the job
-queue and the FFmpeg/transcription worker are implemented; IP
-extraction (Milestone 3) is next. See `docs/DECISIONS.md` for the build
-log and `docs/ARCHITECTURE.md` for the full pipeline design.
+Milestone 3 of 6 complete: foundation + demo experience, the upload +
+transcription pipeline, and the IP intelligence engine (per-chunk
+extraction, per-training synthesis, cross-training IP map with
+contradiction/gap detection and course opportunities — see
+`worker/prompts/`). Curriculum architecture (Milestone 4) is next. See
+`docs/DECISIONS.md` for the build log and `docs/ARCHITECTURE.md` for
+the pipeline design.
 
 ## Quick start (demo mode — zero credentials)
 

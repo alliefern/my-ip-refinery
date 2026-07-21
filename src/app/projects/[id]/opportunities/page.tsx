@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getDataSource } from "@/lib/data";
+import { isDemoMode } from "@/lib/config";
 import { Card, PageHeader, ScoreBar } from "@/components/ui";
+import { selectOpportunityAction } from "./actions";
 
 export const metadata = { title: "Course Direction" };
 
@@ -85,6 +87,19 @@ export default async function OpportunitiesPage({
                   </div>
                 )}
               </dl>
+
+              {!isDemoMode() && !isSelected && (
+                <form action={selectOpportunityAction} className="mt-4">
+                  <input type="hidden" name="projectId" value={id} />
+                  <input type="hidden" name="opportunityId" value={opp.id} />
+                  <button
+                    type="submit"
+                    className="bg-ink text-paper rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
+                  >
+                    Choose this direction
+                  </button>
+                </form>
+              )}
             </Card>
           );
         })}

@@ -57,6 +57,45 @@ export const demoProject: Project = {
     profanity: "light",
     preserveSignaturePhrases: true,
   },
+  ipMap: {
+    dominant_themes: [
+      "Offers fail on targeting before they fail on price",
+      "Package one sharp outcome, not a menu of deliverables",
+      "Validate with real buyers before building anything",
+    ],
+    signature_frameworks: [
+      "The Offer Spine (Person / Problem / Process / Proof)",
+      "The One Person Principle",
+      "The Founding Five",
+      "The Red Flag Filter",
+      "The 10x Gap",
+    ],
+    repeated_teachings: [
+      "Price the outcome, not the hours (appears in 3 trainings)",
+    ],
+    unique_insights: [
+      "Niche the problem, not the industry (Strategy Audio)",
+    ],
+    contradictions: [
+      {
+        topic: "Starting price advice",
+        positions: [
+          "Start slightly uncomfortable, raise every three clients",
+          "Anchor to problem cost first, comfort second",
+        ],
+        trainings: ["Group Call: Offer Teardowns"],
+      },
+    ],
+    missing_steps: [
+      "Red Flag Filter criteria 4–5 referenced but never stated on any recording",
+    ],
+    bonus_material: [
+      "Payment-plan Q&A (Offer Teardowns) — useful, but not on the core path",
+    ],
+    other_product_material: [
+      "Cold-audience validation would need its own training material",
+    ],
+  },
   createdAt: "2026-07-14T10:00:00.000Z",
   updatedAt: now,
 };

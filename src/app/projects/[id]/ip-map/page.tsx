@@ -8,6 +8,31 @@ import { Card, PageHeader, ScoreBar, SupportBadge } from "@/components/ui";
 
 export const metadata = { title: "IP Map" };
 
+function MapList({
+  label,
+  items,
+  tone,
+}: {
+  label: string;
+  items: string[];
+  tone?: "warn";
+}) {
+  return (
+    <div>
+      <p className="text-ink-faint text-xs font-medium tracking-wide uppercase">
+        {label}
+      </p>
+      <ul
+        className={`mt-1 list-inside list-disc space-y-0.5 ${tone === "warn" ? "text-warn" : "text-ink-soft"}`}
+      >
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 const TYPE_LABELS: Record<IpItemType, string> = {
   concept: "Concept",
   signature_framework: "Signature framework",
@@ -40,11 +65,13 @@ export default async function IpMapPage({
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const data = getDataSource();
-  const [items, assets] = await Promise.all([
+  const [project, items, assets] = await Promise.all([
+    data.getProject(user.id, id),
     data.listIpItems(user.id, id),
     data.listAssets(user.id, id),
   ]);
   const assetTitle = new Map(assets.map((a) => [a.id, a.displayTitle]));
+  const map = project?.ipMap ?? null;
   const presentTypes = IP_ITEM_TYPES.filter((t) =>
     items.some((i) => i.type === t),
   );
@@ -58,6 +85,54 @@ export default async function IpMapPage({
         title="IP Map"
         subtitle="Everything mined from your trainings, traceable to its source. Nothing here was invented."
       />
+
+      {map && (
+        <Card className="mb-8">
+          <h2 className="text-lg">Cross-training analysis</h2>
+          <div className="mt-4 grid gap-5 text-sm sm:grid-cols-2">
+            {map.dominant_themes && map.dominant_themes.length > 0 && (
+              <MapList label="Dominant themes" items={map.dominant_themes} />
+            )}
+            {map.signature_frameworks && map.signature_frameworks.length > 0 && (
+              <MapList label="Signature frameworks" items={map.signature_frameworks} />
+            )}
+            {map.repeated_teachings && map.repeated_teachings.length > 0 && (
+              <MapList label="Repeated teachings" items={map.repeated_teachings} />
+            )}
+            {map.unique_insights && map.unique_insights.length > 0 && (
+              <MapList label="Unique insights" items={map.unique_insights} />
+            )}
+            {map.missing_steps && map.missing_steps.length > 0 && (
+              <MapList label="Missing steps" items={map.missing_steps} tone="warn" />
+            )}
+            {map.bonus_material && map.bonus_material.length > 0 && (
+              <MapList label="Belongs in the bonus vault" items={map.bonus_material} />
+            )}
+            {map.other_product_material && map.other_product_material.length > 0 && (
+              <MapList
+                label="Unused opportunities (different product)"
+                items={map.other_product_material}
+              />
+            )}
+          </div>
+          {map.contradictions && map.contradictions.length > 0 && (
+            <div className="bg-warn-soft mt-5 rounded-md p-3">
+              <p className="text-warn text-xs font-semibold tracking-wide uppercase">
+                Contradictions to resolve
+              </p>
+              <ul className="text-warn mt-1 space-y-1.5 text-sm">
+                {map.contradictions.map((c) => (
+                  <li key={c.topic}>
+                    <span className="font-medium">{c.topic}:</span>{" "}
+                    {c.positions.join(" — versus — ")}{" "}
+                    <span className="opacity-75">({c.trainings.join(", ")})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Card>
+      )}
 
       <div className="mb-6 flex flex-wrap gap-2">
         <Link

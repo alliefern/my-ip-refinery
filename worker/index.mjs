@@ -7,6 +7,7 @@
 
 import { createDb } from "./lib/db.mjs";
 import { runTranscribeAsset } from "./lib/pipeline.mjs";
+import { runBuildIpMap, runExtractIp } from "./lib/ai-pipeline.mjs";
 
 const required = [
   "SUPABASE_URL",
@@ -33,6 +34,8 @@ process.on("SIGINT", () => {
 
 const HANDLERS = {
   transcribe_asset: runTranscribeAsset,
+  extract_ip: runExtractIp,
+  build_ip_map: runBuildIpMap,
 };
 
 async function tick() {

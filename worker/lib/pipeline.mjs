@@ -60,6 +60,7 @@ export async function runTranscribeAsset(db, job) {
   try {
     // 1. Download the original from private storage.
     await db.updateAsset(asset.id, { status: "PREPARING_AUDIO" });
+    await db.updateProjectStatusIf(asset.project_id, ["QUEUED"], "TRANSCRIBING");
     const sourcePath = join(workDir, "source-media");
     const url = await db.signedDownloadUrl(asset.storage_path);
     const response = await fetch(url);
@@ -167,6 +168,14 @@ export async function runTranscribeAsset(db, job) {
       });
     }
     await db.updateAsset(asset.id, { status: "TRANSCRIBED", error_message: null });
+
+    // Chain straight into IP extraction for this training.
+    await db.enqueueJob(
+      asset.project_id,
+      asset.id,
+      "extract_ip",
+      `extract:${asset.id}`,
+    );
   } finally {
     await rm(workDir, { recursive: true, force: true });
   }

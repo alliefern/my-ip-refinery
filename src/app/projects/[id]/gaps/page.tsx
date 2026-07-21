@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getDataSource } from "@/lib/data";
 import { Card, PageHeader } from "@/components/ui";
-import { answerGapQuestionAction } from "./actions";
+import { isDemoMode } from "@/lib/config";
+import { answerGapQuestionAction, skipGapQuestionAction } from "./actions";
 
 export const metadata = { title: "Gap Questions" };
 
@@ -74,6 +75,18 @@ export default async function GapsPage({
                   className="bg-ink text-paper mt-2 rounded-md px-4 py-1.5 text-sm font-medium hover:opacity-90"
                 >
                   Save answer
+                </button>
+              </form>
+            )}
+            {q.status === "OPEN" && !isDemoMode() && (
+              <form action={skipGapQuestionAction} className="mt-2">
+                <input type="hidden" name="projectId" value={id} />
+                <input type="hidden" name="questionId" value={q.id} />
+                <button
+                  type="submit"
+                  className="text-ink-faint text-xs hover:underline"
+                >
+                  Skip — mark as unresolved
                 </button>
               </form>
             )}

@@ -15,3 +15,6 @@ and document rather than block on questions.
 | 8 | Worker = container polling `processing_jobs` | Portable across Fly.io/Railway (~$5/mo); no vendor lock-in vs. a managed runner. Decision on host deferred until go-live. |
 | 9 | Supabase region us-east-1 proposed | Owner declined automated project creation mid-session — creation pending owner's preference (region/project ownership). Migrations are host-agnostic. |
 | 10 | `raw_text` kept alongside `clean_text` per chunk | Normalisation must never destroy the creator's original wording. |
+| 11 | Prompt library lives in `worker/prompts/` (not `src/prompts/`) | Prompts execute in the worker; keeping them beside their runtime avoids a cross-package import while staying versioned and separate from UI code. |
+| 12 | Map-level analysis stored as `projects.ip_map_json`, syntheses as `source_assets.synthesis_json` | These are read-only UI panels; relational tables (ip_items, opportunities, gap_questions) remain the structured outputs that drive workflows. |
+| 13 | Invalid structured output → one re-ask, then retryable job failure | Balances resilience against runaway token spend; both calls' tokens are recorded in usage_events. |

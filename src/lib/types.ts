@@ -102,8 +102,22 @@ export interface Project {
   selectedCourseOpportunityId: string | null;
   intake: ProjectIntake;
   voiceSettings: VoiceSettings;
+  ipMap: IpMapSummary | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Cross-training analysis stored on the project (stage 6 output). */
+export interface IpMapSummary {
+  dominant_themes?: string[];
+  signature_frameworks?: string[];
+  repeated_teachings?: string[];
+  unique_insights?: string[];
+  contradictions?: { topic: string; positions: string[]; trainings: string[] }[];
+  possibly_outdated?: string[];
+  missing_steps?: string[];
+  bonus_material?: string[];
+  other_product_material?: string[];
 }
 
 export interface ProjectIntake {
