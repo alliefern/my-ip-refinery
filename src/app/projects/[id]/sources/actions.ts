@@ -104,8 +104,42 @@ export async function prepareUploadAction(
     const { signedUrl } = await createSignedUpload(path);
     return { ok: true, assetId: asset.id, signedUrl };
   } catch {
+    // The row already exists (status UPLOADING) — without this, it would
+    // sit there forever with no upload ever having been attempted.
+    await supabase
+      .from("source_assets")
+      .update({
+        status: "FAILED",
+        error_message: "Could not create an upload destination. Try again.",
+      })
+      .eq("id", asset.id);
     return { ok: false, message: "Could not create an upload destination." };
   }
+}
+
+/**
+ * Called by the client when the browser → storage transfer itself fails
+ * (network drop, tab backgrounded, connection reset). Without this, a
+ * failed PUT only updates transient in-browser state — the database row
+ * stays UPLOADING forever with no way to retry.
+ */
+export async function failUploadAction(input: {
+  projectId: string;
+  assetId: string;
+  message: string;
+}): Promise<void> {
+  if (isDemoMode()) return;
+  const user = await getSessionUser();
+  if (!user) return;
+
+  const supabase = await createSupabaseServerClient();
+  await supabase
+    .from("source_assets")
+    .update({ status: "FAILED", error_message: input.message })
+    .eq("id", input.assetId)
+    .eq("project_id", input.projectId)
+    .eq("status", "UPLOADING");
+  revalidatePath(`/projects/${input.projectId}/sources`);
 }
 
 export async function completeUploadAction(input: {
@@ -164,11 +198,30 @@ export async function retryAssetAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: asset } = await supabase
     .from("source_assets")
-    .select("id, project_id")
+    .select("id, project_id, storage_path")
     .eq("id", assetId)
     .eq("project_id", projectId)
     .maybeSingle();
   if (!asset) return;
+
+  // The file may never have actually finished uploading (a stalled or
+  // interrupted transfer). Re-queuing transcription for a file that
+  // isn't in storage would just fail again — the only real fix is a
+  // fresh upload, so surface that instead of a doomed retry.
+  const fileIsPresent = asset.storage_path
+    ? await objectExists(asset.storage_path)
+    : false;
+  if (!fileIsPresent) {
+    await supabase
+      .from("source_assets")
+      .update({
+        status: "FAILED",
+        error_message: "The file never finished uploading. Delete this and upload it again.",
+      })
+      .eq("id", assetId);
+    revalidatePath(`/projects/${projectId}/sources`);
+    return;
+  }
 
   await supabase
     .from("source_assets")

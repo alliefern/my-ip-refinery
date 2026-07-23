@@ -39,7 +39,14 @@ export default async function SourcesPage({
       )}
 
       <div className="space-y-2">
-        {assets.map((a) => (
+        {assets.map((a) => {
+          const uploadMinutesAgo =
+            a.status === "UPLOADING"
+              ? Math.floor((Date.now() - new Date(a.createdAt).getTime()) / 60000)
+              : null;
+          const stalled = uploadMinutesAgo !== null && uploadMinutesAgo >= 20;
+
+          return (
           <Card
             key={a.id}
             className="flex flex-wrap items-center justify-between gap-3 py-3"
@@ -50,8 +57,17 @@ export default async function SourcesPage({
                 {a.originalFilename}
                 {a.durationSeconds ? ` · ${formatTimestamp(a.durationSeconds)}` : ""}
                 {` · ${(a.sizeBytes / 1024 ** 2).toFixed(0)} MB`}
+                {uploadMinutesAgo !== null &&
+                  ` · started ${uploadMinutesAgo < 1 ? "just now" : `${uploadMinutesAgo} min ago`}`}
                 {a.errorMessage && (
                   <span className="text-danger"> · {a.errorMessage}</span>
+                )}
+                {stalled && (
+                  <span className="text-warn">
+                    {" "}
+                    · Taking unusually long — if the browser tab was closed
+                    or the connection dropped, delete this and upload again.
+                  </span>
                 )}
               </p>
             </div>
@@ -62,7 +78,9 @@ export default async function SourcesPage({
                     ? "bg-ok-soft text-ok"
                     : a.status === "FAILED"
                       ? "bg-danger-soft text-danger"
-                      : "bg-paper text-ink-soft border-line border"
+                      : stalled
+                        ? "bg-warn-soft text-warn"
+                        : "bg-paper text-ink-soft border-line border"
                 }`}
               >
                 {a.status.toLowerCase().replace(/_/g, " ")}
@@ -93,7 +111,8 @@ export default async function SourcesPage({
               )}
             </div>
           </Card>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

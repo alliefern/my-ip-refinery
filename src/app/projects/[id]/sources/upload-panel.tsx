@@ -1,11 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   completeUploadAction,
+  failUploadAction,
   prepareUploadAction,
 } from "./actions";
+
+/** Large training videos compete for the same bandwidth — upload a few
+ * at a time rather than firing every file at once, which is what was
+ * causing simultaneous stalls on ordinary home connections. */
+const MAX_CONCURRENT_UPLOADS = 2;
 
 interface UploadState {
   filename: string;
@@ -19,7 +25,19 @@ export function UploadPanel({ projectId }: { projectId: string }) {
   const [uploads, setUploads] = useState<Record<string, UploadState>>({});
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const activeCountRef = useRef(0);
   const router = useRouter();
+
+  useEffect(() => {
+    const warnOnUnload = (e: BeforeUnloadEvent) => {
+      if (activeCountRef.current > 0) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", warnOnUnload);
+    return () => window.removeEventListener("beforeunload", warnOnUnload);
+  }, []);
 
   const patch = (key: string, update: Partial<UploadState>) =>
     setUploads((prev) => ({
@@ -33,46 +51,69 @@ export function UploadPanel({ projectId }: { projectId: string }) {
       ...prev,
       [key]: { filename: file.name, progress: 0, status: "uploading" },
     }));
-
-    const prepared = await prepareUploadAction({
-      projectId,
-      filename: file.name,
-      mimeType: file.type,
-      sizeBytes: file.size,
-    });
-    if (!prepared.ok) {
-      patch(key, { status: "error", message: prepared.message });
-      return;
-    }
+    activeCountRef.current += 1;
 
     try {
-      await putWithProgress(prepared.signedUrl, file, (pct) =>
-        patch(key, { progress: pct }),
-      );
-    } catch {
-      patch(key, {
-        status: "error",
-        message: "Upload interrupted — try again.",
+      const prepared = await prepareUploadAction({
+        projectId,
+        filename: file.name,
+        mimeType: file.type,
+        sizeBytes: file.size,
       });
-      return;
-    }
+      if (!prepared.ok) {
+        patch(key, { status: "error", message: prepared.message });
+        return;
+      }
 
-    patch(key, { status: "processing", progress: 100 });
-    const completed = await completeUploadAction({
-      projectId,
-      assetId: prepared.assetId,
-    });
-    if (!completed.ok) {
-      patch(key, { status: "error", message: completed.message });
-      return;
+      try {
+        await putWithProgress(prepared.signedUrl, file, (pct) =>
+          patch(key, { progress: pct }),
+        );
+      } catch {
+        patch(key, {
+          status: "error",
+          message: "Upload interrupted — try again.",
+        });
+        // Persist the failure so it doesn't sit at "uploading" forever in
+        // the source library if this panel is closed right after.
+        await failUploadAction({
+          projectId,
+          assetId: prepared.assetId,
+          message:
+            "Upload interrupted — the connection dropped or the browser tab was closed.",
+        });
+        return;
+      }
+
+      patch(key, { status: "processing", progress: 100 });
+      const completed = await completeUploadAction({
+        projectId,
+        assetId: prepared.assetId,
+      });
+      if (!completed.ok) {
+        patch(key, { status: "error", message: completed.message });
+        return;
+      }
+      patch(key, { status: "done" });
+      router.refresh();
+    } finally {
+      activeCountRef.current -= 1;
     }
-    patch(key, { status: "done" });
-    router.refresh();
   }
 
-  function handleFiles(files: FileList | null) {
+  async function handleFiles(files: FileList | null) {
     if (!files) return;
-    Array.from(files).forEach((file) => void uploadFile(file));
+    const queue = Array.from(files);
+    let cursor = 0;
+    async function worker() {
+      while (cursor < queue.length) {
+        const file = queue[cursor++]!;
+        await uploadFile(file);
+      }
+    }
+    await Promise.all(
+      Array.from({ length: Math.min(MAX_CONCURRENT_UPLOADS, queue.length) }, worker),
+    );
   }
 
   return (
@@ -91,7 +132,7 @@ export function UploadPanel({ projectId }: { projectId: string }) {
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
-          handleFiles(e.dataTransfer.files);
+          void handleFiles(e.dataTransfer.files);
         }}
         className={`cursor-pointer rounded-lg border border-dashed p-10 text-center transition-colors ${
           dragging ? "border-accent bg-accent-soft" : "border-line hover:border-ink-faint"
@@ -109,7 +150,7 @@ export function UploadPanel({ projectId }: { projectId: string }) {
           className="hidden"
           accept="video/*,audio/*,.pdf,.docx,.pptx,.txt,.md"
           onChange={(e) => {
-            handleFiles(e.target.files);
+            void handleFiles(e.target.files);
             e.target.value = "";
           }}
         />
