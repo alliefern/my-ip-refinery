@@ -8,6 +8,11 @@ import {
   prepareUploadAction,
 } from "./actions";
 
+/** Large training videos compete for the same bandwidth — upload a few
+ * at a time rather than firing every file at once, so one connection
+ * hiccup can't stall the whole batch simultaneously. */
+const MAX_CONCURRENT_UPLOADS = 2;
+
 interface UploadState {
   filename: string;
   progress: number;
@@ -96,9 +101,19 @@ export function UploadPanel({ projectId }: { projectId: string }) {
     }
   }
 
-  function handleFiles(files: FileList | null) {
+  async function handleFiles(files: FileList | null) {
     if (!files) return;
-    Array.from(files).forEach((file) => void uploadFile(file));
+    const queue = Array.from(files);
+    let cursor = 0;
+    async function worker() {
+      while (cursor < queue.length) {
+        const file = queue[cursor++]!;
+        await uploadFile(file);
+      }
+    }
+    await Promise.all(
+      Array.from({ length: Math.min(MAX_CONCURRENT_UPLOADS, queue.length) }, worker),
+    );
   }
 
   return (
@@ -117,7 +132,7 @@ export function UploadPanel({ projectId }: { projectId: string }) {
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
-          handleFiles(e.dataTransfer.files);
+          void handleFiles(e.dataTransfer.files);
         }}
         className={`cursor-pointer rounded-lg border border-dashed p-10 text-center transition-colors ${
           dragging ? "border-accent bg-accent-soft" : "border-line hover:border-ink-faint"
@@ -135,7 +150,7 @@ export function UploadPanel({ projectId }: { projectId: string }) {
           className="hidden"
           accept="video/*,audio/*,.pdf,.docx,.pptx,.txt,.md"
           onChange={(e) => {
-            handleFiles(e.target.files);
+            void handleFiles(e.target.files);
             e.target.value = "";
           }}
         />
