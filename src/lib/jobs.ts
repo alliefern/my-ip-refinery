@@ -130,3 +130,34 @@ export async function requeueFailedJob(
   if (error) throw error;
   return (data ?? []).length > 0;
 }
+
+/**
+ * Re-arm a failed project-level job (build_ip_map, generate_blueprint,
+ * generate_lessons, generate_course_assets — none of which have a
+ * source_asset_id). These jobs can otherwise fail permanently with no
+ * way back in: build_ip_map in particular uses a fixed idempotency key
+ * per project, so a plain re-enqueue is a silent no-op against the
+ * existing FAILED row.
+ */
+export async function requeueFailedProjectJob(
+  projectId: string,
+  jobType: string,
+): Promise<boolean> {
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("processing_jobs")
+    .update({
+      status: "PENDING",
+      run_after: new Date().toISOString(),
+      error_code: null,
+      error_message: null,
+      progress_percent: 0,
+    })
+    .eq("project_id", projectId)
+    .eq("job_type", jobType)
+    .is("source_asset_id", null)
+    .eq("status", "FAILED")
+    .select("id");
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}

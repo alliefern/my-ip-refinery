@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getDataSource } from "@/lib/data";
+import { isDemoMode } from "@/lib/config";
 import { IP_ITEM_TYPES, type IpItemType } from "@/lib/types";
 import { formatTimestamp } from "@/lib/validation";
 import { Card, PageHeader, ScoreBar, SupportBadge } from "@/components/ui";
+import { retryProjectJobAction } from "../actions";
 
 export const metadata = { title: "IP Map" };
 
@@ -65,13 +67,17 @@ export default async function IpMapPage({
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const data = getDataSource();
-  const [project, items, assets] = await Promise.all([
+  const [project, items, assets, jobs] = await Promise.all([
     data.getProject(user.id, id),
     data.listIpItems(user.id, id),
     data.listAssets(user.id, id),
+    data.listJobs(user.id, id),
   ]);
   const assetTitle = new Map(assets.map((a) => [a.id, a.displayTitle]));
   const map = project?.ipMap ?? null;
+  const mapJob = jobs.find(
+    (j) => j.jobType === "build_ip_map" && j.sourceAssetId === null,
+  );
   const presentTypes = IP_ITEM_TYPES.filter((t) =>
     items.some((i) => i.type === t),
   );
@@ -85,6 +91,35 @@ export default async function IpMapPage({
         title="IP Map"
         subtitle="Everything mined from your trainings, traceable to its source. Nothing here was invented."
       />
+
+      {!map && mapJob?.status === "FAILED" && (
+        <Card className="border-danger/30 bg-danger-soft mb-8">
+          <p className="text-danger text-sm font-medium">
+            The cross-training analysis failed to build.
+          </p>
+          <p className="text-ink-soft mt-1 text-sm">
+            {mapJob.errorMessage ??
+              "The AI couldn't produce a valid course map from what's uploaded so far."}
+          </p>
+          <p className="text-ink-faint mt-2 text-xs">
+            The individual items below are unaffected — they were mined
+            training by training, before this stage runs. Course direction
+            options won't appear until this stage succeeds.
+          </p>
+          {!isDemoMode() && (
+            <form action={retryProjectJobAction} className="mt-4">
+              <input type="hidden" name="projectId" value={id} />
+              <input type="hidden" name="jobType" value="build_ip_map" />
+              <button
+                type="submit"
+                className="bg-ink text-paper rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
+              >
+                Retry
+              </button>
+            </form>
+          )}
+        </Card>
+      )}
 
       {map && (
         <Card className="mb-8">

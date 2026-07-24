@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getDataSource } from "@/lib/data";
 import { isDemoMode } from "@/lib/config";
-import { Card, PageHeader, ScoreBar } from "@/components/ui";
+import { Card, EmptyState, PageHeader, ScoreBar } from "@/components/ui";
 import { selectOpportunityAction } from "./actions";
+import { retryProjectJobAction } from "../actions";
 
 export const metadata = { title: "Course Direction" };
 
@@ -16,11 +17,16 @@ export default async function OpportunitiesPage({
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const data = getDataSource();
-  const [project, opportunities] = await Promise.all([
+  const [project, opportunities, jobs] = await Promise.all([
     data.getProject(user.id, id),
     data.listOpportunities(user.id, id),
+    data.listJobs(user.id, id),
   ]);
   if (!project) redirect("/dashboard");
+
+  const mapJob = jobs.find(
+    (j) => j.jobType === "build_ip_map" && j.sourceAssetId === null,
+  );
 
   return (
     <div>
@@ -29,7 +35,43 @@ export default async function OpportunitiesPage({
         subtitle="Your library supports more than one course. These are the viable directions, scored by evidence strength — not by which sounds most exciting."
       />
 
-      <div className="space-y-5">
+      {opportunities.length === 0 ? (
+        mapJob?.status === "FAILED" ? (
+          <Card className="border-danger/30 bg-danger-soft">
+            <p className="text-danger text-sm font-medium">
+              Building your course directions failed.
+            </p>
+            <p className="text-ink-soft mt-1 text-sm">
+              {mapJob.errorMessage ??
+                "The AI couldn't produce a valid course map from what's uploaded so far."}
+            </p>
+            <p className="text-ink-faint mt-2 text-xs">
+              This can happen when there isn't yet enough source material for
+              the AI to find a strong, well-supported direction — a single
+              short training is often too thin. Adding more trainings before
+              retrying usually helps.
+            </p>
+            {!isDemoMode() && (
+              <form action={retryProjectJobAction} className="mt-4">
+                <input type="hidden" name="projectId" value={id} />
+                <input type="hidden" name="jobType" value="build_ip_map" />
+                <button
+                  type="submit"
+                  className="bg-ink text-paper rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
+                >
+                  Retry
+                </button>
+              </form>
+            )}
+          </Card>
+        ) : (
+          <EmptyState
+            title="Still analyzing your library"
+            body="Course directions appear once every training has finished transcription and IP extraction. Check the Overview tab to see what's still processing."
+          />
+        )
+      ) : (
+        <div className="space-y-5">
         {opportunities.map((opp) => {
           const isSelected = project.selectedCourseOpportunityId === opp.id;
           return (
@@ -103,7 +145,8 @@ export default async function OpportunitiesPage({
             </Card>
           );
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

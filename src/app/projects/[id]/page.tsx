@@ -5,6 +5,8 @@ import { PROJECT_STATUSES } from "@/lib/types";
 import { PROJECT_STATUS_LABELS } from "@/lib/status";
 import { formatTimestamp } from "@/lib/validation";
 import { Card, PageHeader } from "@/components/ui";
+import { retryProjectJobAction } from "./actions";
+import { isDemoMode } from "@/lib/config";
 
 export const metadata = { title: "Overview" };
 
@@ -12,6 +14,17 @@ export const metadata = { title: "Overview" };
 const PIPELINE = PROJECT_STATUSES.filter(
   (s) => !["DRAFT", "FAILED", "COMPLETE"].includes(s),
 );
+
+/** Project-level jobs (no source_asset_id) that have a manual retry
+ * path once they've permanently failed. Source-asset jobs are retried
+ * from the Sources page instead, which verifies the file actually
+ * landed in storage first. */
+const RETRYABLE_JOB_TYPES = new Set([
+  "build_ip_map",
+  "generate_blueprint",
+  "generate_lessons",
+  "generate_course_assets",
+]);
 
 export default async function ProjectOverview({
   params,
@@ -21,6 +34,7 @@ export default async function ProjectOverview({
   const { id } = await params;
   const user = await getSessionUser();
   if (!user) redirect("/login");
+  const demo = isDemoMode();
   const data = getDataSource();
   const [project, assets, jobs, usage] = await Promise.all([
     data.getProject(user.id, id),
@@ -160,24 +174,47 @@ export default async function ProjectOverview({
         <>
           <h2 className="mt-10 mb-4 text-lg">Recent jobs</h2>
           <div className="space-y-2">
-            {jobs.map((j) => (
-              <div
-                key={j.id}
-                className="text-ink-soft flex justify-between text-sm"
-              >
-                <span>
-                  {j.jobType.replace(/_/g, " ")}
-                  {j.attemptCount > 1 && ` (attempt ${j.attemptCount})`}
-                </span>
-                <span
-                  className={
-                    j.status === "FAILED" ? "text-danger" : "text-ink-faint"
-                  }
-                >
-                  {j.status.toLowerCase()}
-                </span>
-              </div>
-            ))}
+            {jobs.map((j) => {
+              const canRetry =
+                !demo &&
+                j.status === "FAILED" &&
+                j.sourceAssetId === null &&
+                RETRYABLE_JOB_TYPES.has(j.jobType);
+              return (
+                <div key={j.id} className="text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-ink-soft">
+                      {j.jobType.replace(/_/g, " ")}
+                      {j.attemptCount > 1 && ` (attempt ${j.attemptCount})`}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={
+                          j.status === "FAILED" ? "text-danger" : "text-ink-faint"
+                        }
+                      >
+                        {j.status.toLowerCase()}
+                      </span>
+                      {canRetry && (
+                        <form action={retryProjectJobAction}>
+                          <input type="hidden" name="projectId" value={id} />
+                          <input type="hidden" name="jobType" value={j.jobType} />
+                          <button
+                            type="submit"
+                            className="border-line hover:border-ink rounded-md border px-2.5 py-1 text-xs font-medium"
+                          >
+                            Retry
+                          </button>
+                        </form>
+                      )}
+                    </span>
+                  </div>
+                  {j.status === "FAILED" && j.errorMessage && (
+                    <p className="text-danger mt-0.5 text-xs">{j.errorMessage}</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
