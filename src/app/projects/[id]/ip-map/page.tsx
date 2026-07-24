@@ -7,6 +7,7 @@ import { IP_ITEM_TYPES, type IpItemType } from "@/lib/types";
 import { formatTimestamp } from "@/lib/validation";
 import { Card, PageHeader, ScoreBar, SupportBadge } from "@/components/ui";
 import { retryProjectJobAction } from "../actions";
+import { thinMaterialMessage } from "../job-messages";
 
 export const metadata = { title: "IP Map" };
 
@@ -94,13 +95,19 @@ export default async function IpMapPage({
 
       {!map && mapJob?.status === "FAILED" && (
         <Card className="border-danger/30 bg-danger-soft mb-8">
-          <p className="text-danger text-sm font-medium">
-            The cross-training analysis failed to build.
-          </p>
-          <p className="text-ink-soft mt-1 text-sm">
-            {mapJob.errorMessage ??
-              "The AI couldn't produce a valid course map from what's uploaded so far."}
-          </p>
+          {(() => {
+            const { headline, detail } = thinMaterialMessage(mapJob);
+            return (
+              <>
+                <p className="text-danger text-sm font-medium">{headline}</p>
+                {detail && (
+                  <p className="text-ink-faint mt-2 text-xs">
+                    Technical detail: {detail}
+                  </p>
+                )}
+              </>
+            );
+          })()}
           <p className="text-ink-faint mt-2 text-xs">
             The individual items below are unaffected — they were mined
             training by training, before this stage runs. Course direction

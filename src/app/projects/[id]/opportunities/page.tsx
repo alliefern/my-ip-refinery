@@ -5,6 +5,7 @@ import { isDemoMode } from "@/lib/config";
 import { Card, EmptyState, PageHeader, ScoreBar } from "@/components/ui";
 import { selectOpportunityAction } from "./actions";
 import { retryProjectJobAction } from "../actions";
+import { thinMaterialMessage } from "../job-messages";
 
 export const metadata = { title: "Course Direction" };
 
@@ -38,19 +39,19 @@ export default async function OpportunitiesPage({
       {opportunities.length === 0 ? (
         mapJob?.status === "FAILED" ? (
           <Card className="border-danger/30 bg-danger-soft">
-            <p className="text-danger text-sm font-medium">
-              Building your course directions failed.
-            </p>
-            <p className="text-ink-soft mt-1 text-sm">
-              {mapJob.errorMessage ??
-                "The AI couldn't produce a valid course map from what's uploaded so far."}
-            </p>
-            <p className="text-ink-faint mt-2 text-xs">
-              This can happen when there isn't yet enough source material for
-              the AI to find a strong, well-supported direction — a single
-              short training is often too thin. Adding more trainings before
-              retrying usually helps.
-            </p>
+            {(() => {
+              const { headline, detail } = thinMaterialMessage(mapJob);
+              return (
+                <>
+                  <p className="text-danger text-sm font-medium">{headline}</p>
+                  {detail && (
+                    <p className="text-ink-faint mt-2 text-xs">
+                      Technical detail: {detail}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
             {!isDemoMode() && (
               <form action={retryProjectJobAction} className="mt-4">
                 <input type="hidden" name="projectId" value={id} />
