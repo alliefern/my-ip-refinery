@@ -23,6 +23,22 @@ export async function enqueueTranscribeJob(
   if (error && error.code !== "23505") throw error;
 }
 
+/** Documents (PDF/DOCX/PPTX/TXT) go through text extraction instead of
+ * transcription, then join the same extract_ip → IP map chain. */
+export async function enqueueDocumentExtractJob(
+  projectId: string,
+  assetId: string,
+): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.from("processing_jobs").insert({
+    project_id: projectId,
+    source_asset_id: assetId,
+    job_type: "extract_document_text",
+    idempotency_key: `doctext:${assetId}`,
+  });
+  if (error && error.code !== "23505") throw error;
+}
+
 /**
  * Enqueue blueprint generation. Deliberately re-runnable (choosing a
  * new direction regenerates the draft), but never stacked: an existing

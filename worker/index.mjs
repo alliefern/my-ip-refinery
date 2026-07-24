@@ -7,6 +7,7 @@
 
 import { createDb } from "./lib/db.mjs";
 import { runTranscribeAsset } from "./lib/pipeline.mjs";
+import { runExtractDocumentText } from "./lib/doc-pipeline.mjs";
 import {
   runBuildIpMap,
   runExtractIp,
@@ -43,6 +44,7 @@ process.on("SIGINT", () => {
 
 const HANDLERS = {
   transcribe_asset: runTranscribeAsset,
+  extract_document_text: runExtractDocumentText,
   extract_ip: runExtractIp,
   build_ip_map: runBuildIpMap,
   generate_blueprint: runGenerateBlueprint,

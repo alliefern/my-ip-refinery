@@ -203,13 +203,22 @@ export default async function LessonPage({
                     {assetTitle.get(s.sourceAssetId) ?? "Creator answer"}
                   </p>
                   <p className="text-ink-faint text-xs">{s.supportNote}</p>
-                  {s.startSeconds !== null && s.endSeconds !== null && (
+                  {s.startSeconds !== null && s.endSeconds !== null ? (
                     <Link
                       href={`/projects/${id}/transcripts?asset=${s.sourceAssetId}${s.transcriptChunkId ? `&chunk=${s.transcriptChunkId}` : ""}`}
                       className="text-accent text-xs hover:underline"
                     >
                       ≈ {formatTimestamp(s.startSeconds)}–{formatTimestamp(s.endSeconds)} →
                     </Link>
+                  ) : (
+                    s.transcriptChunkId && (
+                      <Link
+                        href={`/projects/${id}/transcripts?asset=${s.sourceAssetId}&chunk=${s.transcriptChunkId}`}
+                        className="text-accent text-xs hover:underline"
+                      >
+                        view source text →
+                      </Link>
+                    )
                   )}
                 </li>
               ))}

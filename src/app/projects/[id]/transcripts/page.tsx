@@ -19,8 +19,12 @@ export default async function TranscriptsPage({
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const data = getDataSource();
+  const DOCUMENT_KINDS = new Set(["slide_deck", "workbook", "note"]);
   const assets = (await data.listAssets(user.id, id)).filter(
-    (a) => a.durationSeconds !== null,
+    (a) =>
+      a.durationSeconds !== null ||
+      (DOCUMENT_KINDS.has(a.kind) &&
+        ["TRANSCRIBED", "EXTRACTING", "READY"].includes(a.status)),
   );
   const selected =
     assets.find((a) => a.id === assetParam) ?? assets[0] ?? null;
@@ -30,7 +34,7 @@ export default async function TranscriptsPage({
     <div>
       <PageHeader
         title="Transcripts"
-        subtitle="Timestamps are machine-generated approximations from audio chunking."
+        subtitle="Timestamps are machine-generated approximations from audio chunking. Written documents show their extracted text in reading order."
       />
 
       <div className="mb-6 flex flex-wrap gap-2">
@@ -58,8 +62,9 @@ export default async function TranscriptsPage({
             }
           >
             <p className="text-ink-faint mb-2 text-xs font-medium tracking-wide">
-              ≈ {formatTimestamp(chunk.startSeconds)} –{" "}
-              {formatTimestamp(chunk.endSeconds)}
+              {chunk.startSeconds !== null && chunk.endSeconds !== null
+                ? `≈ ${formatTimestamp(chunk.startSeconds)} – ${formatTimestamp(chunk.endSeconds)}`
+                : (chunk.locationLabel ?? `Part ${chunk.sequenceNumber}`)}
             </p>
             <p className="text-[15px] leading-relaxed">{chunk.cleanText}</p>
           </Card>

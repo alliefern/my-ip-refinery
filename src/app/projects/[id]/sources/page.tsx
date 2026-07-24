@@ -9,6 +9,20 @@ import { deleteAssetAction, retryAssetAction } from "./actions";
 
 export const metadata = { title: "Sources" };
 
+const DOCUMENT_KINDS = new Set(["slide_deck", "workbook", "note"]);
+
+/** Documents reuse the media status enum; relabel the audio-specific
+ * stages so a PDF never claims to be "transcribing". */
+function statusLabel(kind: string, status: string): string {
+  if (DOCUMENT_KINDS.has(kind)) {
+    if (status === "TRANSCRIBING" || status === "PREPARING_AUDIO") {
+      return "reading text";
+    }
+    if (status === "TRANSCRIBED") return "text extracted";
+  }
+  return status.toLowerCase().replace(/_/g, " ");
+}
+
 export default async function SourcesPage({
   params,
 }: {
@@ -83,7 +97,7 @@ export default async function SourcesPage({
                         : "bg-paper text-ink-soft border-line border"
                 }`}
               >
-                {a.status.toLowerCase().replace(/_/g, " ")}
+                {statusLabel(a.kind, a.status)}
               </span>
               {!demo && a.status === "FAILED" && (
                 <form action={retryAssetAction}>

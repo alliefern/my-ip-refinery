@@ -23,6 +23,14 @@ action — never a permanent spinner.
 | `MEDIA_SILENT` | No usable audio track detected | Check the recording has audio |
 | `CHUNK_TRANSCRIBE_FAILED` | One chunk failed after retries | Retry stage (only failed chunks re-run) |
 
+## Document processing (worker)
+
+| Code | Meaning | User action |
+|------|---------|-------------|
+| `DOC_NO_TEXT` | Document has no extractable text (scanned images, image-only slides) | Re-export with selectable text, or upload the original/a recording instead |
+| `DOC_PASSWORD_PROTECTED` | PDF is encrypted | Remove the password (print to a new PDF) and re-upload |
+| `DOC_UNREADABLE` | File is corrupt or an unsupported legacy format (.doc/.ppt) | Re-save as .docx/.pptx/.pdf and re-upload |
+
 ## AI stages
 
 | Code | Meaning | User action |

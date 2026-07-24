@@ -219,7 +219,7 @@ export default async function IpMapPage({
             </div>
             <p className="text-ink-faint mt-3 text-xs">
               {assetTitle.get(item.sourceAssetId) ?? "Unknown source"}
-              {item.startSeconds !== null && item.endSeconds !== null && (
+              {item.startSeconds !== null && item.endSeconds !== null ? (
                 <>
                   {" · ≈ "}
                   {item.transcriptChunkId ? (
@@ -233,6 +233,18 @@ export default async function IpMapPage({
                     `${formatTimestamp(item.startSeconds)}–${formatTimestamp(item.endSeconds)}`
                   )}
                 </>
+              ) : (
+                item.transcriptChunkId && (
+                  <>
+                    {" · "}
+                    <Link
+                      href={`/projects/${id}/transcripts?asset=${item.sourceAssetId}&chunk=${item.transcriptChunkId}`}
+                      className="text-accent hover:underline"
+                    >
+                      view source text
+                    </Link>
+                  </>
+                )
               )}
             </p>
           </Card>

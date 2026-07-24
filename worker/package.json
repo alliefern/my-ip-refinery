@@ -9,6 +9,9 @@
     "test": "node --test \"test/*.test.mjs\""
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.52.0"
+    "@supabase/supabase-js": "^2.52.0",
+    "jszip": "^3.10.1",
+    "mammoth": "^1.8.0",
+    "pdfjs-dist": "^4.10.38"
   }
 }

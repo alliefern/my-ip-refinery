@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth";
 import { isDemoMode, limits } from "@/lib/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { enqueueTranscribeJob, requeueFailedJob } from "@/lib/jobs";
+import {
+  enqueueDocumentExtractJob,
+  enqueueTranscribeJob,
+  requeueFailedJob,
+} from "@/lib/jobs";
 import {
   createSignedUpload,
   deleteObject,
@@ -77,6 +81,19 @@ export async function prepareUploadAction(
       sizeBytes: input.sizeBytes,
     });
     if (validationError) return { ok: false, message: validationError.message };
+    // Documents are mined by the AI pipeline like trainings now, so the
+    // same per-project cap applies (they cost real processing money).
+    const { count } = await supabase
+      .from("source_assets")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", input.projectId)
+      .in("kind", ["slide_deck", "workbook", "note"]);
+    if ((count ?? 0) >= limits.maxFilesPerProject) {
+      return {
+        ok: false,
+        message: `A project can contain up to ${limits.maxFilesPerProject} written documents.`,
+      };
+    }
   }
 
   const { data: asset, error } = await supabase
@@ -170,6 +187,10 @@ export async function completeUploadAction(input: {
 
   if (asset.kind === "video" || asset.kind === "audio") {
     await enqueueTranscribeJob(asset.project_id, asset.id);
+  } else if (asset.kind !== "creator_answer") {
+    // Written material (slide_deck, workbook, note) mines the same IP
+    // pipeline via text extraction instead of transcription.
+    await enqueueDocumentExtractJob(asset.project_id, asset.id);
   }
 
   const { data: project } = await supabase
@@ -198,7 +219,7 @@ export async function retryAssetAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: asset } = await supabase
     .from("source_assets")
-    .select("id, project_id, storage_path")
+    .select("id, project_id, kind, storage_path")
     .eq("id", assetId)
     .eq("project_id", projectId)
     .maybeSingle();
@@ -228,7 +249,13 @@ export async function retryAssetAction(formData: FormData) {
     .update({ status: "UPLOADED", error_message: null })
     .eq("id", assetId);
   const requeued = await requeueFailedJob(projectId, assetId);
-  if (!requeued) await enqueueTranscribeJob(projectId, assetId);
+  if (!requeued) {
+    if (asset.kind === "video" || asset.kind === "audio") {
+      await enqueueTranscribeJob(projectId, assetId);
+    } else if (asset.kind !== "creator_answer") {
+      await enqueueDocumentExtractJob(projectId, assetId);
+    }
+  }
   revalidatePath(`/projects/${projectId}/sources`);
 }
 

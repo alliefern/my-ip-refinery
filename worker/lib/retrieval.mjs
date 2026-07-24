@@ -79,7 +79,11 @@ export function buildSourceBlock({ rankedChunks, ipItems, creatorAnswers, charBu
   }
 
   for (const { chunk } of rankedChunks) {
-    const block = `### Transcript excerpt from "${chunk.assetTitle}" (≈${Math.floor(chunk.start_seconds)}s–${Math.floor(chunk.end_seconds)}s)\n${chunk.clean_text}`;
+    const location =
+      chunk.start_seconds !== null && chunk.start_seconds !== undefined
+        ? `≈${Math.floor(chunk.start_seconds)}s–${Math.floor(chunk.end_seconds)}s`
+        : chunk.location_label || "written document";
+    const block = `### Source excerpt from "${chunk.assetTitle}" (${location})\n${chunk.clean_text}`;
     if (used + block.length > charBudget) break;
     parts.push(block);
     used += block.length;

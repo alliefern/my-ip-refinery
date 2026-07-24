@@ -6,11 +6,14 @@
  */
 
 import * as extraction from "../prompts/extraction-v1.mjs";
+import * as extractionDoc from "../prompts/extraction-doc-v1.mjs";
 import * as synthesis from "../prompts/synthesis-v1.mjs";
 import * as ipmap from "../prompts/ipmap-v1.mjs";
 import * as blueprint from "../prompts/blueprint-v1.mjs";
 import { estimateTextCostCents, runStructured } from "./llm.mjs";
 import { stitchChunks } from "./stitch.mjs";
+
+const DOCUMENT_KINDS = new Set(["slide_deck", "workbook", "note"]);
 
 function modelConfig() {
   return {
@@ -51,6 +54,9 @@ export async function runExtractIp(db, job) {
   }
 
   let usageTotal = { inputTokens: 0, outputTokens: 0 };
+  const isDocument = DOCUMENT_KINDS.has(asset.kind);
+  const promptModule = isDocument ? extractionDoc : extraction;
+  const promptVersion = isDocument ? "extraction-doc-v1" : "extraction-v1";
 
   // Stage 4: per-chunk extraction.
   for (let i = 0; i < chunks.length; i++) {
@@ -58,8 +64,8 @@ export async function runExtractIp(db, job) {
     if (await db.chunkHasIpItems(chunk.id)) continue;
 
     const { data, usage } = await runStructured(
-      extraction,
-      extraction.buildUserPrompt({
+      promptModule,
+      promptModule.buildUserPrompt({
         chunk,
         assetTitle: asset.display_title,
         topic: intake.topic,
@@ -77,12 +83,16 @@ export async function runExtractIp(db, job) {
         type: item.type,
         title: item.title,
         content: item.description,
-        start_seconds: clamp(item.start_seconds, chunk.start_seconds, chunk.end_seconds),
-        end_seconds: clamp(item.end_seconds, chunk.start_seconds, chunk.end_seconds),
+        start_seconds: isDocument
+          ? null
+          : clamp(item.start_seconds, chunk.start_seconds, chunk.end_seconds),
+        end_seconds: isDocument
+          ? null
+          : clamp(item.end_seconds, chunk.start_seconds, chunk.end_seconds),
         confidence_score: item.confidence,
         distinctiveness_score: item.distinctiveness,
         support_type: item.support,
-        metadata_json: { prompt_version: "extraction-v1" },
+        metadata_json: { prompt_version: promptVersion },
       })),
     );
     await db.setProgress(job.id, Math.round(((i + 1) / (chunks.length + 1)) * 100));
@@ -119,8 +129,9 @@ export async function runExtractIp(db, job) {
   });
   await db.updateAsset(asset.id, { status: "READY", error_message: null });
 
-  // Chain: when every media asset is READY, build the IP map once.
-  const assets = await db.listMediaAssets(asset.project_id);
+  // Chain: when every content asset (trainings AND documents) is READY,
+  // build the IP map once.
+  const assets = await db.listContentAssets(asset.project_id);
   const allReady = assets.every((a) => a.status === "READY" || a.id === asset.id);
   if (allReady) {
     await db.enqueueJob(
@@ -145,7 +156,7 @@ export async function runBuildIpMap(db, job) {
     "BUILDING_IP_MAP",
   );
 
-  const assets = await db.listMediaAssets(job.project_id);
+  const assets = await db.listContentAssets(job.project_id);
   const ready = assets.filter(
     (a) => a.status === "READY" && a.synthesis_json && Object.keys(a.synthesis_json).length > 0,
   );
@@ -256,7 +267,7 @@ export async function runGenerateBlueprint(db, job) {
   }
 
   const config = modelConfig();
-  const assets = await db.listMediaAssets(job.project_id);
+  const assets = await db.listContentAssets(job.project_id);
   const ready = assets.filter(
     (a) => a.synthesis_json && Object.keys(a.synthesis_json).length > 0,
   );

@@ -179,8 +179,10 @@ export interface TranscriptChunk {
   id: string;
   sourceAssetId: string;
   sequenceNumber: number;
-  startSeconds: number;
-  endSeconds: number;
+  /** Null for written documents — they carry locationLabel instead. */
+  startSeconds: number | null;
+  endSeconds: number | null;
+  locationLabel?: string | null;
   cleanText: string;
 }
 

@@ -140,8 +140,10 @@ export function UploadPanel({ projectId }: { projectId: string }) {
       >
         <p className="font-medium">Drop trainings here, or click to browse</p>
         <p className="text-ink-faint mt-1 text-sm">
-          MP4, MOV, M4V, WebM, MP3, M4A, WAV — plus PDF, DOCX, PPTX, TXT
-          supporting files. Files go straight to your private storage.
+          Video or audio trainings (MP4, MOV, MP3 and similar) — plus written
+          content like PDFs, Word docs or slide decks, which get mined for
+          your IP just like recordings. Files go straight to your private
+          storage.
         </p>
         <input
           ref={inputRef}

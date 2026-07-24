@@ -171,7 +171,7 @@ async function loadProjectContext(db, projectId) {
       "Approve the blueprint before generating lessons.",
     );
   }
-  const assets = await db.listMediaAssets(projectId);
+  const assets = await db.listContentAssets(projectId);
   const assetIdByTitle = new Map(assets.map((a) => [a.display_title, a.id]));
   const allChunks = await db.listAllProjectChunks(projectId);
   const assetTitle = new Map(assets.map((a) => [a.id, a.display_title]));

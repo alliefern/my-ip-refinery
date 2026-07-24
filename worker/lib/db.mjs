@@ -101,8 +101,9 @@ export function createDb() {
         {
           source_asset_id: assetId,
           sequence_number: chunk.sequenceNumber,
-          start_seconds: chunk.startSeconds,
-          end_seconds: chunk.endSeconds,
+          start_seconds: chunk.startSeconds ?? null,
+          end_seconds: chunk.endSeconds ?? null,
+          location_label: chunk.locationLabel ?? null,
           raw_text: chunk.rawText,
           clean_text: chunk.cleanText,
           status: "DONE",
@@ -159,7 +160,9 @@ export function createDb() {
     async listChunksForAsset(assetId) {
       const { data, error } = await supabase
         .from("transcript_chunks")
-        .select("id, sequence_number, start_seconds, end_seconds, clean_text")
+        .select(
+          "id, sequence_number, start_seconds, end_seconds, location_label, clean_text",
+        )
         .eq("source_asset_id", assetId)
         .eq("status", "DONE")
         .order("sequence_number");
@@ -195,6 +198,19 @@ export function createDb() {
         .select("id, display_title, kind, status, synthesis_json")
         .eq("project_id", projectId)
         .in("kind", ["video", "audio"]);
+      if (error) throw error;
+      return data ?? [];
+    },
+
+    /** All mineable source material: media trainings AND written
+     * documents. Excludes creator_answer rows (gap answers are pulled
+     * separately and quoted verbatim, never re-mined). */
+    async listContentAssets(projectId) {
+      const { data, error } = await supabase
+        .from("source_assets")
+        .select("id, display_title, kind, status, synthesis_json")
+        .eq("project_id", projectId)
+        .in("kind", ["video", "audio", "slide_deck", "workbook", "note"]);
       if (error) throw error;
       return data ?? [];
     },
@@ -417,7 +433,7 @@ export function createDb() {
       const { data, error } = await supabase
         .from("transcript_chunks")
         .select(
-          "id, source_asset_id, start_seconds, end_seconds, clean_text, source_assets!inner(project_id, display_title)",
+          "id, source_asset_id, start_seconds, end_seconds, location_label, clean_text, source_assets!inner(project_id, display_title)",
         )
         .eq("source_assets.project_id", projectId)
         .eq("status", "DONE");
@@ -427,6 +443,7 @@ export function createDb() {
         source_asset_id: row.source_asset_id,
         start_seconds: row.start_seconds,
         end_seconds: row.end_seconds,
+        location_label: row.location_label,
         clean_text: row.clean_text,
         assetTitle: row.source_assets.display_title,
       }));

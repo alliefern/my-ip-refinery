@@ -115,7 +115,9 @@ export const supabaseDataSource: DataSource = {
     const supabase = await db();
     const { data, error } = await supabase
       .from("transcript_chunks")
-      .select("id, source_asset_id, sequence_number, start_seconds, end_seconds, clean_text")
+      .select(
+        "id, source_asset_id, sequence_number, start_seconds, end_seconds, location_label, clean_text",
+      )
       .eq("source_asset_id", assetId)
       .order("sequence_number");
     if (error) throw error;
@@ -125,6 +127,7 @@ export const supabaseDataSource: DataSource = {
       sequenceNumber: row.sequence_number,
       startSeconds: row.start_seconds,
       endSeconds: row.end_seconds,
+      locationLabel: row.location_label,
       cleanText: row.clean_text,
     }));
   },
